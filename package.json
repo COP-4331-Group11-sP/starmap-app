@@ -1,0 +1,21 @@
+{
+    "name": "backend",
+    "version": "1.0.0",
+    "description": "",
+    "main": "server.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "if [ \"$NODE_ENV\" = 'production' ]; then node server.js; else nodemon server.js; fi",
+        "start-wi": "if %NODE_ENV% == 'production' (node server.js) else (nodemon server.js)"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "cors": "^2.8.5",
+        "dotenv": "^10.0.0",
+        "express": "^4.17.1",
+        "mongoose": "^5.12.15",
+        "node": "^16.3.0",
+        "nodemon": "^2.0.7"
+    }
+}

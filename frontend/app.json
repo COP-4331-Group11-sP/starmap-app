@@ -1,0 +1,9 @@
+{
+  "name": "frontend",
+  "displayName": "frontend",
+  "ios": {
+    "infoPlist": {
+      "NSLocationWhenInUseUsageDescription": "This is a key test"
+    }
+  }
+}
