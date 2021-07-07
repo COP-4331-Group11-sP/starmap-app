@@ -1,28 +1,31 @@
 {
-  "name": "frontend",
-  "version": "0.0.1",
-  "private": true,
+  "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "start": "node node_modules/react-native/local-cli/cli.js start",
-    "test": "jest"
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "eject": "expo eject"
   },
   "dependencies": {
-    "react": "16.8.3",
-    "react-dom": "16.8.3",
-    "react-native": "0.59.9",
-    "react-native-cli": "^1.0.0",
-    "react-native-geolocation-service": "2.0.1",
-    "react-viro": "2.17.0"
+    "expo": "~42.0.0",
+    "expo-font": "~9.2.1",
+    "expo-gl": "~10.4.1",
+    "expo-linking": "~2.3.1",
+    "expo-location": "~12.1.2",
+    "expo-sensors": "~10.2.2",
+    "expo-status-bar": "~1.0.4",
+    "expo-three": "^5.7.0",
+    "react": "16.13.1",
+    "react-dom": "16.13.1",
+    "react-native": "https://github.com/expo/react-native/archive/sdk-42.0.0.tar.gz",
+    "react-native-svg": "12.1.1",
+    "react-native-web": "~0.13.12",
+    "react-navigation": "^4.4.4",
+    "three": "^0.130.1"
   },
   "devDependencies": {
-    "@babel/core": "7.14.6",
-    "@babel/runtime": "7.14.6",
-    "babel-jest": "27.0.5",
-    "jest": "27.0.5",
-    "metro-react-native-babel-preset": "0.66.0",
-    "react-test-renderer": "16.8.3"
+    "@babel/core": "^7.9.0"
   },
-  "jest": {
-    "preset": "react-native"
-  }
+  "private": true
 }

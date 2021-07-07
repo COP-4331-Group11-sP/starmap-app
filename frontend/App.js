@@ -1,175 +1,175 @@
-/**
- * Copyright (c) 2017-present, Viro, Inc.
- * All rights reserved.
- *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
- */
-
-import React, { Component } from 'react';
+import { ExpoWebGLRenderingContext, GLView } from "expo-gl";
+import { Renderer, TextureLoader } from "expo-three";
+import * as React from "react";
+import { View, Image, Text, TouchableOpacity } from "react-native";
 import {
-  AppRegistry,
-  Text,
-  View,
-  StyleSheet,
-  PixelRatio,
-  TouchableHighlight,
-} from 'react-native';
+  AmbientLight,
+  BoxBufferGeometry,
+  Fog,
+  GridHelper,
+  Mesh,
+  MeshStandardMaterial,
+  PerspectiveCamera,
+  PointLight,
+  Scene,
+  SpotLight,
+} from "three";
 
-import {
-  ViroARSceneNavigator
-} from 'react-viro';
+import { Platform } from "react-native";
 
-import GeolocationManager from './components/GeolocationManager';
+import { colors, page, text, spacing } from "./assets/global_styles";
+import Geolocation from './components/Geolocation';
+import Rotation from './components/Rotation';
 
-/*
- TODO: Insert your API key below
- */
-let sharedProps = {
-  apiKey:"API_KEY_HERE",
-}
+import Navbar from "./components/Navbar";
 
-// Sets the default scene you want for AR and VR
-let InitialARScene = require('./components/StarMapAR');
+export default function App() {
+  let timeout;
 
-let UNSET = "UNSET";
-let AR_NAVIGATOR_TYPE = "AR";
+  React.useEffect(() => {
+    // Clear the animation loop when the component unmounts
+    return () => clearTimeout(timeout);
+  }, []);
 
-// This determines which type of experience to launch in, or UNSET, if the user should
-// be presented with a choice of AR or VR. By default, we offer the user a choice.
-let defaultNavigatorType = UNSET;
+  let topBar;
 
-export default class App extends Component {
-  constructor() {
-    super();
-
-    this.state = {
-      navigatorType : defaultNavigatorType,
-      sharedProps : sharedProps,
-
-    }
-    this._getExperienceSelector = this._getExperienceSelector.bind(this);
-    this._getARNavigator = this._getARNavigator.bind(this);
-    this._getExperienceButtonOnPress = this._getExperienceButtonOnPress.bind(this);
-    this._exitViro = this._exitViro.bind(this);
-  }
-
-  // Replace this function with the contents of _getVRNavigator() or _getARNavigator()
-  // if you are building a specific type of experience.
-  render() {
-    return this._getARNavigator();
-    /* MENU VERSION
-    if (this.state.navigatorType == UNSET) {
-      return this._getExperienceSelector();
-    } else if (this.state.navigatorType == AR_NAVIGATOR_TYPE) {
-      return this._getARNavigator();
-    }
-    */
-  }
-
-  // Presents the user with a choice of an AR or VR experience
-  _getExperienceSelector() {
-    return (
-      <View style={localStyles.outer}  >
-        <View style={localStyles.inner} >
-          <Text style={localStyles.titleText}>
-            Choose your desired experience:
-          </Text>
-
-          <TouchableHighlight style={localStyles.buttons}
-            onPress={this._getExperienceButtonOnPress(AR_NAVIGATOR_TYPE)}
-            underlayColor={'#68a0ff'} >
-
-            <Text style={localStyles.buttonText}>AR</Text>
-          </TouchableHighlight>
+  // True for testing for mobile
+  if (Platform.OS === "ios" || Platform.OS === "android" || true) {
+    topBar = (
+      <>
+        <View
+          style={{
+            color: "#ffffff",
+            position: "absolute",
+            top: 0,
+            left: 0,
+          }}
+        >
+          <TouchableOpacity>
+            <Image
+              source={require("./assets/List.png")}
+              style={{ width: 50, height: 50, tintColor: "white" }}
+            />
+          </TouchableOpacity>
         </View>
+        <View
+          style={{
+            color: "#ffffff",
+            position: "absolute",
+            top: 0,
+            right: 0,
+          }}
+        >
+          <TouchableOpacity>
+            <Image
+              source={require("./assets/MagnifyingGlass.png")}
+              style={{ width: 50, height: 50, tintColor: "white" }}
+            />
+          </TouchableOpacity>
+        </View>
+      </>
+    );
+  } else {
+    topBar = (
+      <View
+        style={{
+          backgroundColor: "#212121",
+          color: "white",
+          height: 50,
+          left: 0,
+          right: 0,
+          position: "absolute",
+          top: 0,
+        }}
+      >
+        Testing
       </View>
     );
   }
+  
+  let geolocation = <Geolocation />;
+  let rotation = <Rotation />;
 
-  // Returns the ViroARSceneNavigator which will start the AR experience
-  _getARNavigator() {
-    return (
-      <View style={{flex: 1}}>
-        <ViroARSceneNavigator {...this.state.sharedProps}
-        initialScene={{scene: InitialARScene}} />
-        <GeolocationManager />
-      </View>
-    );
-  }
+  return (
+    <>
+      <GLView
+        style={{ flex: 1 }}
+        onContextCreate={async (gl) => {
+          const { drawingBufferWidth: width, drawingBufferHeight: height } = gl;
+          const sceneColor = "#000000";
 
-  // This function returns an anonymous/lambda function to be used
-  // by the experience selector buttons
-  _getExperienceButtonOnPress(navigatorType) {
-    return () => {
-      this.setState({
-        navigatorType : navigatorType
-      })
-    }
-  }
+          // Create a WebGLRenderer without a DOM element
+          const renderer = new Renderer({ gl });
+          renderer.setSize(width, height);
+          renderer.setClearColor(sceneColor);
 
-  // This function "exits" Viro by setting the navigatorType to UNSET.
-  _exitViro() {
-    this.setState({
-      navigatorType : UNSET
-    })
-  }
+          const camera = new PerspectiveCamera(70, width / height, 0.01, 1000);
+          camera.position.set(2, 5, 5);
+
+          const scene = new Scene();
+          scene.fog = new Fog(sceneColor, 1, 10000);
+          scene.add(new GridHelper(10, 10));
+
+          const ambientLight = new AmbientLight(0x101010);
+          scene.add(ambientLight);
+
+          const pointLight = new PointLight(0xffffff, 2, 1000, 1);
+          pointLight.position.set(0, 200, 200);
+          scene.add(pointLight);
+
+          const spotLight = new SpotLight(0xffffff, 0.5);
+          spotLight.position.set(0, 500, 100);
+          spotLight.lookAt(scene.position);
+          scene.add(spotLight);
+
+          const cube = new IconMesh();
+          scene.add(cube);
+
+          camera.lookAt(cube.position);
+
+          function update() {
+            cube.rotation.y += 0.05;
+            cube.rotation.x += 0.025;
+          }
+
+          // Setup an animation loop
+          const render = () => {
+            timeout = requestAnimationFrame(render);
+            update();
+            renderer.render(scene, camera);
+            gl.endFrameEXP();
+          };
+          render();
+        }}
+      />
+      <Navbar
+        style={[{ position: "absolute", top: 0, height: 50 }, page.color]}
+      >
+        <View style={{position: 'absolute', top: 0, left: 0}}>
+          <TouchableOpacity>
+            <Image source={require('./assets/List.png')} style={{width: 50, height: 50, tintColor: colors.primary}}/>
+          </TouchableOpacity>
+        </View>
+        <View style={{position: 'absolute', top: 0, right: 0}}>
+          <TouchableOpacity>
+            <Image source={require('./assets/MagnifyingGlass.png')} style={{width: 50, height: 50, tintColor: colors.primary}}/>
+          </TouchableOpacity>
+        </View>
+      </Navbar>
+      {rotation}
+      {geolocation}
+    </>
+  );
 }
 
-let localStyles = StyleSheet.create({
-  viroContainer :{
-    flex : 1,
-    backgroundColor: "black",
-  },
-  outer : {
-    flex : 1,
-    flexDirection: 'row',
-    alignItems:'center',
-    backgroundColor: "black",
-  },
-  inner: {
-    flex : 1,
-    flexDirection: 'column',
-    alignItems:'center',
-    backgroundColor: "black",
-  },
-  titleText: {
-    paddingTop: 30,
-    paddingBottom: 20,
-    color:'#fff',
-    textAlign:'center',
-    fontSize : 25
-  },
-  buttonText: {
-    color:'#fff',
-    textAlign:'center',
-    fontSize : 20
-  },
-  buttons : {
-    height: 80,
-    width: 150,
-    paddingTop:20,
-    paddingBottom:20,
-    marginTop: 10,
-    marginBottom: 10,
-    backgroundColor:'#68a0cf',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#fff',
-  },
-  exitButton : {
-    height: 50,
-    width: 100,
-    paddingTop:10,
-    paddingBottom:10,
-    marginTop: 10,
-    marginBottom: 10,
-    backgroundColor:'#68a0cf',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#fff',
+class IconMesh extends Mesh {
+  constructor() {
+    super(
+      new BoxBufferGeometry(1.0, 1.0, 1.0),
+      new MeshStandardMaterial({
+        map: new TextureLoader().load(require("./assets/icon.png")),
+        // color: 0xff0000
+      })
+    );
   }
-});
-
-module.exports = App;
+}
