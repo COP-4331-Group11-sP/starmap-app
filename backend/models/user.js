@@ -33,11 +33,12 @@ userSchema.path('email').validate(async (email) => {
 
 userSchema.methods.generateVerificationToken = function () {
     const user = this;
+    const secret = process.env.VERIFICATION_TOKEN;
 
     const verificationToken = jwt.sign(
         { ID: user._id },
-        process.env.VERIFICATION_TOKEN,
-        { expiresIn: "300" }
+        secret,
+        { expiresIn: "1h" }
     );
 
     return verificationToken;

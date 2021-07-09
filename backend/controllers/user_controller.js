@@ -85,17 +85,21 @@ exports.resetPassword = async (req, res) => {
       }
       
       const hash = bcrypt.hashSync(Password1, saltRounds);
-      user.password = hash;
-
-    }
-    user.password = hash;
-    await user.save();
-
-    return res.status(200).send({
-      message: "Updated Password"
-    });
-  } catch(err) {
-    return res.status(500).send(err);
+      
+      try {
+       await User.findByIdAndUpdate({ _id : idPayload.ID}, {password : hash});
+       await User.save();
+       return res.status(200).send({
+        message: "Updated Password"
+        });
+      } catch (err) {
+        return res.status(500).send(err);
+      }    
+    }    
+  } catch (err) {
+    return res.status(400).send({
+      message : "Password Mismatch"
+      });
   }
 }
 
@@ -118,7 +122,7 @@ exports.register = async (req, res) => {
        // Step 2 - Generate a verification token with the user's ID
        const verificationToken = user.generateVerificationToken();
        // Step 3 - Email the user a unique verification link
-       const url = `http://constellario.xyz${PORT}/register/${verificationToken}`
+       const url = `http://constellario.xyz${PORT}/verify/${verificationToken}`
        transporter.sendMail({
          to: email,
          subject: 'Verify Account',
@@ -130,4 +134,54 @@ exports.register = async (req, res) => {
    } catch(err){
        return res.status(500).send(err);
    }
+}
+
+exports.verify = async (req, res) => {
+  const { verificationToken } = req.params;
+  
+  
+  
+  // Check we have an id
+  if (!verificationToken) {
+      return res.status(422).send({ 
+           message: "Missing Token" 
+      });
+  }
+  
+  
+  
+  // Step 1 -  Verify the token from the URL
+  let payload = null
+  try {
+      payload = jwt.verify(
+         verificationToken,
+         process.env.VERIFICATION_TOKEN
+      );
+  } catch (err) {
+      return res.status(500).send(err);
+  }
+  
+  
+  
+  try{
+      // Step 2 - Find user with matching ID
+      const user = await User.findOne({ _id: payload.ID });
+      if (!user) {
+         return res.status(404).send({ 
+            message: "User does not  exists" 
+         });
+      }
+      // Step 3 - Update user verification status to true
+      try {
+        await User.findByIdAndUpdate({ _id : payload.ID}, { verified : true });
+        return res.status(200).send({
+            message: "Account Verified"
+        }); 
+      } catch (err) {
+      return res.status(500).send(err);
+      }
+      
+  } catch (err) {
+  return res.status(500).send(err);
+  }
 }
