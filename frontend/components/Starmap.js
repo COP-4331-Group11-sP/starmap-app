@@ -3,6 +3,7 @@ import { ExpoWebGLRenderingContext, GLView } from "expo-gl";
 import { Renderer, TextureLoader } from "expo-three";
 import OrbitControlsView from 'expo-three-orbit-controls';
 import { View, Button, Text } from 'react-native';
+import * as StarPos from './star-pos';
 
 import stars from '../assets/stars.json';
 
@@ -12,6 +13,7 @@ import {
   CircleGeometry,
   Fog,
   GridHelper,
+  ArrowHelper,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
@@ -20,9 +22,10 @@ import {
   Scene,
   SphereGeometry,
   SpotLight,
+  Vector3
 } from "three";
 
-export default function Starmap() {
+export default function Starmap(props) {
 	let [resp, setResp] = React.useState('');
   let [camera, setCamera] = React.useState(null);
 	let timeout;
@@ -34,6 +37,7 @@ export default function Starmap() {
 	
 	async function getData() {
 	}
+
 
 	return (
 		<>
@@ -58,6 +62,25 @@ export default function Starmap() {
           scene.fog = new Fog(sceneColor, 1, 10000);
           scene.add(new GridHelper(10, 10));
 
+          scene.add(new ArrowHelper(
+            new Vector3(1, 0, 0).normalize(),
+            new Vector3(0, 0, 0),
+            5,
+            0xff0000
+          ));
+          scene.add(new ArrowHelper(
+            new Vector3(0, 1, 0).normalize(),
+            new Vector3(0, 0, 0),
+            5,
+            0x00ff00
+          ));
+          scene.add(new ArrowHelper(
+            new Vector3(0, 0, 1).normalize(),
+            new Vector3(0, 0, 0),
+            5,
+            0x0000ff
+          ));
+
           const ambientLight = new AmbientLight(0x101010);
           scene.add(ambientLight);
 
@@ -71,11 +94,12 @@ export default function Starmap() {
           scene.add(spotLight);
 
           const geo = new SphereGeometry(0.1, 5, 5);
+          const spheres = [];
 
           let time = new Date();
-          let ut = dayFraction(time.getUTCHours(), time.getUTCMinutes(), time.getUTCSeconds());
+          let ut = StarPos.dayFraction(time.getUTCHours(), time.getUTCMinutes(), time.getUTCSeconds());
           
-          let j2000 = daySinceJ2000(time.getUTCFullYear(), 
+          let j2000 = StarPos.daySinceJ2000(time.getUTCFullYear(), 
                                     time.getUTCMonth(), 
                                     time.getUTCDate(),
                                     time.getUTCHours(),
@@ -85,23 +109,49 @@ export default function Starmap() {
           for (let s = 0; s < stars.length; s++) {
             const mat = new MeshBasicMaterial( { color: Math.random() * 0xffffff });
             const sphere = new Mesh(geo, mat);
+            // For decimal formatted RA and DEC (Should be degrees)
+            let raDeg = stars[s].RA_d_A_ICRS;
+            let decDeg = stars[s].DEC_d_D_ICRS;
+            // For HMS format
+            /*
             let ra = stars[s].RA.split(' ').map((val)=>{ return parseFloat(val) });
             let dec = stars[s].DEC.split(' ').map((val)=>{ return parseFloat(val) });
-            let raDeg = hourToDeg(ra[0], ra[1], ra[2]);
-            let decDeg = hourToDeg(dec[0], dec[1], dec[2]);
+            let raDeg = StarPos.hourToDeg(ra[0], ra[1], ra[2]);
+            let decDeg = StarPos.hourToDeg(dec[0], dec[1], dec[2]);
+            */
             let dist = 10;
 
-            let lst = LST(j2000, ut, -82.35);
-            let ha = HA(lst, raDeg);
-            let [el, az] = elAndAz(decDeg, 29.66, ha);
-            let [x, y, z] = sphereToCart(el, az, dist);
+            let lst = StarPos.LST(j2000, ut, props.location.longitude);
+            let ha = StarPos.HA(lst, raDeg);
+            let [el, az] = StarPos.elAndAz(decDeg, props.location.latitude, ha);
+            let [x, y, z] = StarPos.sphereToCart(el, az, dist);
 
             
             sphere.position.set(x,y,z);
             scene.add(sphere);
+            spheres.push(sphere);
           }
 
           function update() {
+            for (let s = 0; s < stars.length; s++) {
+              let raDeg = stars[s].RA_d_A_ICRS;
+              let decDeg = stars[s].DEC_d_D_ICRS;
+              /*
+              let ra = stars[s].RA.split(' ').map((val)=>{ return parseFloat(val) });
+              let dec = stars[s].DEC.split(' ').map((val)=>{ return parseFloat(val) });
+              let raDeg = StarPos.hourToDeg(ra[0], ra[1], ra[2]);
+              let decDeg = StarPos.hourToDeg(dec[0], dec[1], dec[2]);
+              */
+              let dist = 10;
+
+              let lst = StarPos.LST(j2000, ut, props.location.longitude);
+              let ha = StarPos.HA(lst, raDeg);
+              let [el, az] = StarPos.elAndAz(decDeg, props.location.latitude, ha);
+              let [x, y, z] = StarPos.sphereToCart(el, az, dist);
+
+              
+              spheres[s].position.set(x,y,z);
+            }
           }
 
           function hourToDeg(h, m, s) {

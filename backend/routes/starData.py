@@ -3,10 +3,13 @@ import json
 
 managedSimbad = Simbad()
 
-managedSimbad.ROW_LIMIT = 3000
+managedSimbad.ROW_LIMIT = 500
 managedSimbad.add_votable_fields('distance')
+managedSimbad.remove_votable_fields('coordinates')
+managedSimbad.add_votable_fields('ra(d;A;ICRS)','dec(d;D;ICRS)')
 
-result_table = managedSimbad.query_objects(["Vega", "Capella"])
+#result_table = managedSimbad.query_objects(["Vega", "Capella"])
+result_table =managedSimbad.query_catalog('hip')
 result_json = result_table.to_pandas().to_json(orient='records', indent=2)
 result_parsed = json.loads(result_json)
 

@@ -25,12 +25,6 @@ export default function App() {
   } else if (location) {
     text = "lon: " + location.coords.longitude.toFixed(2) + ", lat: " + location.coords.latitude.toFixed(2);
   }
-
-  return (
-    <View style={styles.container}>
-      <Text /*style={styles.paragraph}*/>{text}</Text>
-    </View>
-  );
 }
 
 const styles = StyleSheet.create({
