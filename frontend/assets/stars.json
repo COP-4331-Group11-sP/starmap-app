@@ -1,0 +1,42 @@
+[
+  {
+    "MAIN_ID":"* alf Lyr",
+    "RA":"18 36 56.3363",
+    "DEC":"+38 47 01.280",
+    "RA_PREC":9,
+    "DEC_PREC":9,
+    "COO_ERR_MAJA":3.5099999905,
+    "COO_ERR_MINA":2.8099999428,
+    "COO_ERR_ANGLE":90,
+    "COO_QUAL":"A",
+    "COO_WAVELENGTH":"O",
+    "COO_BIBCODE":"2007A&A...474..653V",
+    "Distance_distance":null,
+    "Distance_Q":"",
+    "Distance_unit":"",
+    "Distance_merr":null,
+    "Distance_perr":null,
+    "Distance_method":"",
+    "Distance_bibcode":""
+  },
+  {
+    "MAIN_ID":"* alf Aur",
+    "RA":"05 16 41.3587",
+    "DEC":"+45 59 52.769",
+    "RA_PREC":9,
+    "DEC_PREC":9,
+    "COO_ERR_MAJA":4.75,
+    "COO_ERR_MINA":2.4700000286,
+    "COO_ERR_ANGLE":90,
+    "COO_QUAL":"A",
+    "COO_WAVELENGTH":"O",
+    "COO_BIBCODE":"2007A&A...474..653V",
+    "Distance_distance":13.0,
+    "Distance_Q":"",
+    "Distance_unit":"pc",
+    "Distance_merr":null,
+    "Distance_perr":null,
+    "Distance_method":"paral",
+    "Distance_bibcode":"2010A&ARv..18...67T"
+  }
+]
