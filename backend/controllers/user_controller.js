@@ -139,8 +139,6 @@ exports.register = async (req, res) => {
 exports.verify = async (req, res) => {
   const { verificationToken } = req.params;
   
-  
-  
   // Check we have an id
   if (!verificationToken) {
       return res.status(422).send({ 
@@ -148,8 +146,7 @@ exports.verify = async (req, res) => {
       });
   }
   
-  
-  
+
   // Step 1 -  Verify the token from the URL
   let payload = null
   try {
@@ -160,9 +157,7 @@ exports.verify = async (req, res) => {
   } catch (err) {
       return res.status(500).send(err);
   }
-  
-  
-  
+
   try{
       // Step 2 - Find user with matching ID
       const user = await User.findOne({ _id: payload.ID });
@@ -185,3 +180,4 @@ exports.verify = async (req, res) => {
   return res.status(500).send(err);
   }
 }
+

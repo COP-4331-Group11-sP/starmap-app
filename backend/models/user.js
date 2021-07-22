@@ -25,12 +25,19 @@ const userSchema = new mongoose.Schema({
 },
 });
 
-
+// prevents duplicate emails
 userSchema.path('email').validate(async (email) => {
   const emailCount = await mongoose.models.user.countDocuments({ email })
   return !emailCount
 }, 'Email already exists');
 
+// prevents duplicate usernames
+userSchema.path('username').validate(async (username) => {
+	const userCount = await mongoose.models.user.countDocuments({ username })
+	return !userCount
+  }, 'User already exists');
+
+// JWT TOKENS GENERATED
 userSchema.methods.generateVerificationToken = function () {
     const user = this;
     const secret = process.env.VERIFICATION_TOKEN;
