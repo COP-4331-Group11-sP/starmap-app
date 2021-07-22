@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const User = require('../models/user.js');
-const PORT = ":5001";
+const PORT = ":5003";
 
 const transporter = nodemailer.createTransport({
 	service: "Gmail",
@@ -146,6 +146,7 @@ exports.verify = async (req, res) => {
       });
   }
   
+
   // Step 1 -  Verify the token from the URL
   let payload = null
   try {
@@ -156,7 +157,7 @@ exports.verify = async (req, res) => {
   } catch (err) {
       return res.status(500).send(err);
   }
- 
+
   try{
       // Step 2 - Find user with matching ID
       const user = await User.findOne({ _id: payload.ID });
@@ -179,3 +180,4 @@ exports.verify = async (req, res) => {
   return res.status(500).send(err);
   }
 }
+

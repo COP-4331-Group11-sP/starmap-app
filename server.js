@@ -73,10 +73,10 @@ try {
 
 // API Routers
 const userRouter = require(path.join(__dirname, urls.backend, urls.routes, '/userRoutes.js'));
-const faveRouter = require(path.join(__dirname, urls.backend, urls.routes, '/faveRoute.js'));
+//const faveRouter = require(path.join(__dirname, urls.backend, urls.routes, '/faveRoute.js'));
 const regRouter = require(path.join(__dirname, urls.backend, urls.routes, '/regRoute.js'));
 app.use(userRouter);
-app.use(faveRouter);
+//app.use(faveRouter);
 app.use(regRouter);
 
 
