@@ -1,5 +1,6 @@
 const express = require('express');
 const faveModel = require('../models/fave');
+const FaveController = require('../controllers/fave_controller.js');
 const app = express();
 
 app.post('/create-favorites', async (request, response) => {
@@ -12,6 +13,8 @@ app.post('/create-favorites', async (request, response) => {
         response.status(500).send(error);
     }
 });
+
+app.post('/update-favorite', FaveController.updateFave);
 
 
 module.exports = app;
