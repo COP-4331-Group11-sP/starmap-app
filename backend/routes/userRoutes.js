@@ -4,7 +4,7 @@ const UserController = require('../controllers/user_controller.js')
 const app = express();
 
 
-app.post('/create-user', async (request, response) => {
+app.post('/API/create-user', async (request, response) => {
   const user = new userModel(request.body);
 
   try {
