@@ -1,31 +1,22 @@
 const mongoose = require("mongoose");
-
-const userSchema = new mongoose.Schema({
-	firstname: {
-		type: String,
-		required: true,
-		trim: true,
-	},
-	lastname: {
-		type: String,
-		required: true,
-	},
-	username: {
-		type: String,
-		required: true,
-		trim: true
-	},
-	password: {
-		type: String,
-		minLength: 8,
-		trim: true
-	},
-	email: {
-		type: String,
-		required: false
-	},
-});
-
-const user = mongoose.model("user", userSchema);
-
-module.exports = user;
+const Schema = mongoose.Schema;// Create Schema
+const userSchema = new Schema({
+  username: {
+    type: String,
+    required: true
+  },
+  password: {
+    type: String,
+    minLength: [8, 'password must have at least 8 characters'],
+    required: true
+  },
+  email: {
+    type: String,
+    required: true
+  },
+  verified: {
+    type: Boolean,
+    required: true,
+    default : false
+  },
+});module.exports = user = mongoose.model("users", userSchema);
