@@ -38,6 +38,40 @@ userSchema.path('username').validate(async (username) => {
   }, 'User already exists');
 
 // JWT TOKENS GENERATED
+userSchema.methods.generateAccessToken = function () {
+	const user = this;
+	const secret = process.env.ACCESS_TOKEN;
+	
+	const Token = jwt.sign(
+			{ ID: user._id },
+			secret,
+			{ expiresIn: "1h" }
+	);
+
+	return Token;
+};
+
+userSchema.methods.generateRefreshToken = function () {
+	const user = this;
+	const secret = process.env.REFRESH_TOKEN;
+	
+	const Token = jwt.sign(
+			{ ID: user._id },
+			secret,
+			{ expiresIn: "1h" }
+	);
+
+	return Token;
+};
+
+userSchema.methods.storeToken = function ( token ) {
+	try {
+		localstorage.setItem('user_data', token.accessToken);
+	} catch (e) {
+		console.log(e.message);
+	}
+};
+
 userSchema.methods.generateVerificationToken = function () {
     const user = this;
     const secret = process.env.VERIFICATION_TOKEN;

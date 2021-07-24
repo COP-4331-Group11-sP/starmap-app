@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const jwt = require("jsonwebtoken");
 const bcrypt = require('bcrypt');
+const { validationResult } = require('express-validator');
 const saltRounds = 10;
 const User = require('../models/user.js');
 const PORT = ":5003";
@@ -12,6 +13,77 @@ const transporter = nodemailer.createTransport({
 	    pass: process.env.EMAIL_PASSWORD,
 	},
 });
+
+exports.register = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  // request entries
+  const { username, email, password } = req.body;
+
+  // check for unique email and username
+  let Email = await User.findOne({
+      email
+  });
+
+  if (Email) {
+    return res.status(400).json({
+      msg: "Email Already Exists"
+    });
+  }
+
+  let userName = await User.findOne({
+      username
+    });
+  if (userName) {
+    return res.status(400).json({
+      msg: "username Already Exists"
+    });
+  }
+
+  const hash = bcrypt.hashSync(password, saltRounds);
+
+  // user is created
+  const user = new user({
+    username: username,
+        email: email,
+        password: hash
+  })
+  try {
+      const newUser = await user.save()
+      res.status(201).json(newUser)
+  }catch(err){
+    console.log(err.message);
+    res.status(500).send("Error in Saving");
+  }
+}
+
+exports.login = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { username, password } = req.body;
+
+  try {
+    let signIn = await User.findOne({ username });
+    if (!signIn){
+      return res.status(400).json({message: "User Not Exist"});
+    }
+    const validPassword = await bcrypt.compareSync(password, signIn.password);
+    if (!validPassword){
+      return res.status(400).json({ message: "Invalid Password"});
+    }
+    //return res.send("ciao");
+    return res.status(200).json({})
+  }catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server Error" });
+  }
+}
 
 exports.resetPasswordEmail = async (req, res) => {
   const { email } = req.body;
@@ -48,7 +120,13 @@ exports.resetPasswordEmail = async (req, res) => {
 
 exports.resetPassword = async (req, res) => {
   const { idToken, pwToken } = req.params;
-  const { Password1, Password2 } = req.body;
+  const { password } = req.body;
+
+  const errors = validationResult(req);
+  if(!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors})
+  }
+
 
   if (!idToken || !pwToken) {
     return res.status(422).send({
@@ -69,58 +147,46 @@ exports.resetPassword = async (req, res) => {
 
   // updates password
   try {
-    if (Password1 == Password2) {
-      const user = await User.findOne({ _id: idPayload.ID});
-      const secret = user.password + "-" + process.env.RESET_TOKEN;
+    const user = await User.findOne({ _id: idPayload.ID});
+    const secret = user.password + "-" + process.env.RESET_TOKEN;
       
-      // checks password hasn't been changed
-      let pwPayload = null;
-      try {
-        pwPayload = jwt.verify(
-          pwToken, 
-          secret
-        );
-      } catch(err) {
-        return res.status(500).send(err);
-      }
+    // checks password hasn't been changed
+    let pwPayload = null;
+    try {
+      pwPayload = jwt.verify(
+        pwToken, 
+        secret
+      );
+    } catch(err) {
+      return res.status(500).send(err);
+    }
       
-      const hash = bcrypt.hashSync(Password1, saltRounds);
-      
-      try {
-       await User.findByIdAndUpdate({ _id : idPayload.ID}, {password : hash});
-       await User.save();
-       return res.status(200).send({
-        message: "Updated Password"
-        });
-      } catch (err) {
-        return res.status(500).send(err);
-      }    
-    }    
-  } catch (err) {
-    return res.status(400).send({
-      message : "Password Mismatch"
+    const hash = bcrypt.hashSync(password, saltRounds);
+
+    try {
+     await User.findByIdAndUpdate({ _id : idPayload.ID}, {password : hash});
+     return res.status(200).send({
+      message: "Updated Password"
       });
+    } catch (err) {
+      return res.status(500).send(err);
+    }       
+  } catch (err) {
+    return res.status(500).send(err);
   }
 }
 
-exports.register = async (req, res) => {
+exports.verifyEmail = async (req, res) => {
     const { email } = req.body;
     // Check we have an email
     if (!email) {
        return res.status(422).send({ message: "Missing email." });
     }
     try{
-       // Check if the email is in use
+       // Find user
        const existingUser = await User.findOne({ email }).exec();
-       if (existingUser) {
-          return res.status(409).send({ 
-                message: "Email is already in use."
-          });
-        }
-       // Step 1 - Create and save the user
-       const user = await new User(req.body).save();
        // Step 2 - Generate a verification token with the user's ID
-       const verificationToken = user.generateVerificationToken();
+       const verificationToken = existingUser.generateVerificationToken();
        // Step 3 - Email the user a unique verification link
        const url = `http://constellario.xyz${PORT}/verify/${verificationToken}`
        transporter.sendMail({
