@@ -1,108 +1,143 @@
-function hourToDeg(h, m, s) {
-return h * 15 + m * 0.25 + s * 0.0041666;
-}
 
-function dayFraction(h, m, s) {
-return (h + (m/60) + (s/3600))/24;
-}
-
-function degToRad(deg) {
-return deg * Math.PI / 180;
-}
-
-function radToDeg(rad) {
-return rad * 180 / Math.PI;
-}
-
-function daySinceJ2000(year,month,day,hour,min,sec) {
-	let daysSince2000 = -1.5;
-	let leap = 0;
-	if (year % 4 != 0) leap = 1;
-	for (let y = 1; y < year - 2000; y++) {
-		if (year % 4 == 0)
-			daysSince2000 += 366;
-		else
-			daysSince2000 += 365;
+export default class StarUtils {
+	static timeToDeg(h, m, s) {
+		return h * 15 + m * 0.25 + s * 0.0041666;
 	}
-	let daysSinceStart;
-	switch (month) {
-		case (0):
-			daysSinceStart = 0;
-			break;
-		case (1):
-			daysSinceStart = 31;
-			break;
-		case (2):
-			daysSinceStart = 59 + leap;
-			break;
-		case (3):
-			daysSinceStart = 90 + leap;
-			break;
-		case (4):
-			daysSinceStart = 120 + leap;
-			break;
-		case (5):
-			daysSinceStart = 151 + leap;
-			break;
-		case (6):
-			daysSinceStart = 181 + leap;
-			break;
-		case (7):
-			daysSinceStart = 212 + leap;
-			break;
-		case (8):
-			daysSinceStart = 243 + leap;
-			break;
-		case (9):
-			daysSinceStart = 273 + leap;
-			break;
-		case (10):
-			daysSinceStart = 304 + leap;
-			break;
-		case (11):
-			daysSinceStart = 334 + leap;
-			break;
+
+	static timeToFrac(h, m, s) {
+		return (3600 * h + 60 * m + s) / (24 * 3600);
 	}
-	return dayFraction(hour, min, sec) + daysSinceStart + day + daysSince2000;
+
+	static timeToHMS(time) {
+		let a = time - Math.floor(time);
+		let b = 24 * 3600 * a;
+		let h = Math.floor(b / 3600);
+		let m = Math.floor((b % 3600) / 60);
+		let s = Math.floor(b % 60) + 1; //conversion causes loss of 1 second
+		return {hours: h, minutes: m, seconds: s};
+	}
+
+	static degToTime(deg) {
+		let h = Math.floor(deg / 15);
+		let m = Math.floor((deg % 15) / 0.25);
+		let s = Math.floor(((deg % 15) % 0.25) / 0.0041666);
+		return {hours: h, minutes: m, seconds: s};
+	}
+
+	static degToRad(deg) {
+		return deg * (Math.PI / 180);
+	}
+
+	static radToDeg(rad) {
+		return rad / (Math.PI / 180);
+	}
+
+	static getUTC(date=new Date()) {
+		return {
+			milliseconds: date.getUTCMilliseconds(),
+			seconds: date.getUTCSeconds(),
+			minutes: date.getUTCMinutes(),
+			hours: date.getUTCHours(),
+			date: date.getUTCDate(),
+			month: date.getUTCMonth() + 1, // month is 0 indexed, hence + 1
+			year: date.getUTCFullYear(),
+			unix: Math.round(date.getTime() / 1000)
+		};
+	}
+
+	// References:
+	// Astronomical Formulae for Calculators
+	// Jean Meeus
+	// Chapter 3: Julian Day and Calendar Date. PG's 23, 24, 25
+	static deltaJ(utc, test=false) {
+		let y, m, A, B, D;
+		if (utc.month <= 2) {
+			y = utc.year - 1;
+			m = utc.month + 12;
+		} else {
+			y = utc.year;
+			m = utc.month;
+		}
+		
+		A = Math.floor(y / 100);
+		B = 2 - A + Math.floor(A / 4);
+		D = utc.date + this.timeToFrac(utc.hours, utc.minutes, utc.seconds);
+		if (test)
+			console.log(`y: ${y}, m: ${m}\nA: ${A}, B: ${B}, D: ${D}`);
+		return Math.floor(365.25 * y) + Math.floor(30.6001 * (m + 1)) + D + 1720994.5 + B;
+	}
+	// formula found from https://www.aa.quae.nl/en/reken/sterrentijd.html
+	static LST(deltaJ, long, test=false) {
+		return (this.GST(deltaJ, test) + long) % 360;
+	}
+	
+	static GST(deltaJ, test=false) {
+		let deltaJD = Math.floor(deltaJ) + 0.5;
+		let j2000 = 2415020.0;
+
+		let T = (deltaJD - j2000) / 36525;
+		let b0 = 0.276919398;
+		let b1 = 100.0021359;
+		let b2 = 0.000001075;
+
+		let bRevs = b0 + b1 * T + b2 * T * T;
+		let bHours = (bRevs - Math.floor(bRevs)) * 24;
+		let bFrac = (deltaJ - deltaJD) * 24 * 1.002737908;
+		let bst = ((bHours + bFrac) * 15) % 360;
+
+		if (test) {
+			console.log(`
+JD: ${deltaJD} T: ${T}
+b0: ${b0} b1: ${b1} b2: ${b2}
+${bRevs} revolutions
+${bHours} hours
+${bFrac} more hours
+${bst} sidereal angle
+${this.degToTime(bst).hours}:${this.degToTime(bst).minutes}:${this.degToTime(bst).seconds} 
+`);
+		}
+
+		return bst;
+	}
+
+	static HA(st, ra) {
+		let ha = st - ra;
+		if (ha < 0) ha += 360;
+		return ha;
+	}
+
+	static azAndAlt(dec, lat, ha) {
+		let sinLat = Math.sin(this.degToRad(lat));
+		let cosLat = Math.cos(this.degToRad(lat));
+		let sinDec = Math.sin(this.degToRad(dec));
+		let cosDec = Math.cos(this.degToRad(dec));
+		let sinHa = Math.sin(this.degToRad(ha));
+		let cosHa = Math.cos(this.degToRad(ha));
+
+		
+	
+		let sinAlt = sinDec * sinLat + cosDec * cosLat * cosHa;
+		let alt = this.radToDeg(Math.asin(sinAlt));
+		
+		let cosAz = (sinDec - sinAlt * sinLat) / (Math.cos(this.degToRad(alt)) * cosLat);
+		let az = this.radToDeg(Math.acos(cosAz));
+		
+		az = sinHa < 0 ? az : 360 - az;
+		return [az, alt];
+	}
+
+	static sphereToCart(az, alt, dist, test=false) {
+		let radAz = this.degToRad(az);
+		let radAlt = this.degToRad(alt);
+		let x = dist * Math.sin(radAz) * Math.cos(radAlt);
+		let y = dist * Math.sin(radAlt);
+		let z = dist * Math.cos(radAz) * Math.cos(radAlt);
+		if (test) {
+			console.log(`cos(AZ) = ${Math.cos(radAz)}\tsin(AZ) = ${Math.sin(radAz)}
+cos(ALT) = ${Math.cos(radAlt)}\tsin(ALT) = ${Math.sin(radAlt)}
+AZ = ${az}\tALT = ${alt}
+radAZ = ${radAz}\tradALT = ${radAlt}`);
+		}
+		return [x, y, z];
+	}
 }
-
-function LST(j2000, ut, long) {
-	let lst = 100.46 + 0.985647 * j2000 + long + 15 * ut;
-	if (lst < 0)
-		lst += 360;
-	return lst % 360;
-}
-
-function HA(lst, raDeg) {
-	let ha = lst - raDeg;
-	if (ha < 0) ha += 360;
-	return ha;
-}
-
-function elAndAz(decDeg, lat, ha) {
-	let sinLat = Math.sin(degToRad(lat));
-	let cosLat = Math.cos(degToRad(lat));
-	let sinDec = Math.sin(degToRad(decDeg));
-	let cosDec = Math.cos(degToRad(decDeg));
-	let sinHa = Math.sin(degToRad(ha));
-	let cosHa = Math.cos(degToRad(ha));
-
-	let sinEl = sinDec * sinLat + cosDec * cosLat * cosHa;
-	let el = radToDeg(Math.asin(sinEl));
-
-	let cosAz = (sinDec - sinEl * sinLat) / (Math.cos(degToRad(el)) * cosLat);
-	let az = radToDeg(Math.acos(cosAz));
-
-	if (sinHa >= 0) 
-		az = 360 - az;
-	return [el, az];
-}
-
-function sphereToCart(el, az, dist) {
-	let x = dist * Math.cos(degToRad(az)) * Math.cos(degToRad(el));
-	let y = dist * Math.sin(degToRad(el));
-	let z = dist * Math.sin(degToRad(az)) * Math.cos(degToRad(el));
-	return [x, y, z];
-}
-
-export { hourToDeg, dayFraction, degToRad, radToDeg, daySinceJ2000, LST, HA, elAndAz, sphereToCart };

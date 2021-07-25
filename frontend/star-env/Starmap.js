@@ -1,177 +1,127 @@
 import * as React from 'react';
 import { ExpoWebGLRenderingContext, GLView } from "expo-gl";
-import { Renderer, TextureLoader } from "expo-three";
+import { Renderer, TextureLoader, THREE } from "expo-three";
 import OrbitControlsView from 'expo-three-orbit-controls';
 import { View, Button, Text } from 'react-native';
-import * as StarPos from './star-pos';
+import StarUtils from './star-pos';
 import './DeviceOrientationController';
 import '../config';
 
-const space = require('./PANO_MellingerRGB.jpg');
 
 import stars from './stars.json';
 
-import {
-  AmbientLight,
-  Color,
-  Fog,
-  GridHelper,
-  ArrowHelper,
-  Mesh,
-  MeshBasicMaterial,
-  MeshStandardMaterial,
-  PerspectiveCamera,
-  PointLight,
-  Scene,
-  SphereGeometry,
-  ShaderMaterial,
-  SpotLight,
-  Vector3
-} from "three";
+global.THREE = global.THREE || THREE;
+
+const bg_img = require('./black_bg.png');
 
 export default function Starmap(props) {
-  let [camera, setCamera] = React.useState(null);
+  let [mapCamera, setMapCamera] = React.useState(null);
   const [errorMsg, setErrorMsg] = React.useState("");
+  const [mapRender, setMapRender] = React.useState(null);
+  const [mapScene, setMapScene] = React.useState(null);
 
   let spheres = [];
 	let timeout;
+  let bg_texture; 
 
   React.useEffect(() => {
     // Clear the animation loop when the component unmounts
-
+    
     return () => clearTimeout(timeout);
   }, []);
 
+  function testArea() {
+    // for testing functions and examples
+    
+  }
+
+  testArea();
+
   async function onContextCreate(gl) {
+    const utils = true;
     const { drawingBufferWidth: width, drawingBufferHeight: height } = gl;
     const sceneColor = "#000000";
     
     // Create a WebGLRenderer without a DOM element
     const renderer = new Renderer({ gl });
+    setMapRender(renderer);
     renderer.setSize(width, height);
     renderer.setClearColor(sceneColor);
 
-    const camera = new PerspectiveCamera(70, width / height, 0.01, 1000);
+    const camera = new THREE.PerspectiveCamera(70, width / height, 0.01, 1000);
+    //const camera = new THREE.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, 0.01, 1000);
     camera.position.set(0, 0, 1);
 
-    setCamera(camera);
+    setMapCamera(camera);
 
-    const scene = new Scene();
-    scene.fog = new Fog(sceneColor, 1, 10000);
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(sceneColor, 1, 10000);
 
+    if (utils) testUtils(scene);
     
 
-
-
-    scene.add(new GridHelper(10, 10));
-
-    scene.add(new ArrowHelper(
-      new Vector3(1, 0, 0).normalize(),
-      new Vector3(0, 0, 0),
-      5,
-      0xff0000
-    ));
-    scene.add(new ArrowHelper(
-      new Vector3(0, 1, 0).normalize(),
-      new Vector3(0, 0, 0),
-      5,
-      0x00ff00
-    ));
-    scene.add(new ArrowHelper(
-      new Vector3(0, 0, 1).normalize(),
-      new Vector3(0, 0, 0),
-      5,
-      0x0000ff
-    ));
-
-    const ambientLight = new AmbientLight(0x101010);
+    const ambientLight = new THREE.AmbientLight(0x101010);
     scene.add(ambientLight);
 
-    const pointLight = new PointLight(0xffffff, 2, 1000, 1);
-    pointLight.position.set(0, 200, 200);
-    scene.add(pointLight);
+    const geo = new THREE.SphereGeometry(1, 3, 3);
 
-    const spotLight = new SpotLight(0xffffff, 0.5);
-    spotLight.position.set(0, 500, 100);
-    spotLight.lookAt(scene.position);
-    scene.add(spotLight);
-
-    const geo = new SphereGeometry(0.1, 8, 8);
-
-    let time = new Date();
-    let ut = StarPos.dayFraction(time.getUTCHours(), time.getUTCMinutes(), time.getUTCSeconds());
+    let time = StarUtils.getUTC(new Date());
     
-    let j2000 = StarPos.daySinceJ2000(time.getUTCFullYear(), 
-                              time.getUTCMonth(), 
-                              time.getUTCDate(),
-                              time.getUTCHours(),
-                              time.getUTCMinutes(),
-                              time.getUTCSeconds());
+    let deltaJ = StarUtils.deltaJ(time);
 
-    const bg_geometry = new SphereGeometry( 500, 60, 40 );
+    
+    const bg_geometry = new THREE.SphereGeometry( 500, 40, 40 );
     // invert the geometry on the x-axis so that all of the faces point inward
-    bg_geometry.scale( - 1, 1, 1 );
-    const bg_texture = new TextureLoader().load(require('./PANO_MellingerRGB.jpg'));
-    const bg_material = new MeshBasicMaterial( { map: bg_texture } );
-    const bg_mesh = new Mesh( bg_geometry, bg_material );
-
-    let lst = StarPos.LST(j2000, ut, global.config.location.longitude);
-    let ha = StarPos.HA(lst, global.config.location.longitude);
-    let [el, az] = StarPos.elAndAz(global.config.location.latitude, global.config.location.latitude, ha);
-    console.log(`Elevation: ${el}, Azimuth: ${az}`);
-    bg_mesh.rotateOnWorldAxis(new Vector3(1, 0, 0), StarPos.degToRad(el+180));
-    bg_mesh.rotateOnWorldAxis(new Vector3(0, 1, 0), StarPos.degToRad(az-45));
+    bg_geometry.scale( -1, 1, 1 );
+    bg_texture = new TextureLoader().load(bg_img);
+    const bg_material = new THREE.MeshBasicMaterial( { map: bg_texture } );
+    const bg_mesh = new THREE.Mesh( bg_geometry, bg_material );
     
+    let lst, ha, az, alt, x, y, z;
     
     scene.add( bg_mesh );
 
-    for (let s = 0; s < stars.length; s++) {
-      const mat = new MeshBasicMaterial( { color: stars[s].color });
-      const sphere = new Mesh(geo, mat);
-      // For decimal formatted RA and DEC (Should be degrees)
-      let raDeg = stars[s].ra;
-      let decDeg = stars[s].dec;
-      let dist = stars[s].dist ? Math.log2(stars[s].dist) : 10;
-      lst = StarPos.LST(j2000, ut, global.config.location.longitude);
-      ha = StarPos.HA(lst, raDeg);
-      [el, az] = StarPos.elAndAz(decDeg, global.config.location.latitude, ha);
-      let [x, y, z] = StarPos.sphereToCart(el, az, dist);
+    let minMag = Number.MAX_VALUE;
+    for (let star of stars) {
+      minMag = star.absMag < minMag ? star.absMag : minMag;
+    }
 
-      sphere.position.set(x,y,z);
-      scene.add(sphere);
+    for (let s = 0; s < stars.length; s++) {
+      const mater = new THREE.MeshBasicMaterial({color: stars[s].color});
+      
+      const sphere = new THREE.Mesh(geo, mater);
       spheres.push(sphere);
+
+      if (stars[s].dist > 10) continue;
+      [x, y, z] = starPos(stars[s], lst);
+
+      sphere.position.set(x,y,-z);
+      let adjMag = stars[s].absMag - minMag + 1;
+      sphere.scale.set(1/adjMag, 1/adjMag, 1/adjMag)
+      scene.add(sphere);
     }
 
     function update() {
-      let time = new Date();
-      let ut = StarPos.dayFraction(time.getUTCHours(), time.getUTCMinutes(), time.getUTCSeconds());
+      time = StarUtils.getUTC(new Date());
       
-      let j2000 = StarPos.daySinceJ2000(time.getUTCFullYear(), 
-                                time.getUTCMonth(), 
-                                time.getUTCDate(),
-                                time.getUTCHours(),
-                                time.getUTCMinutes(),
-                                time.getUTCSeconds());
+      deltaJ = StarUtils.deltaJ(time);
       
-      let lst = StarPos.LST(j2000, ut, global.config.location.longitude);
-      let ha = StarPos.HA(lst, global.config.location.longitude);
-      let [el, az] = StarPos.elAndAz(global.config.location.latitude, global.config.location.latitude, ha);
-      console.log(`Elevation: ${el}, Azimuth: ${az}`);
-      bg_mesh.rotation.set(0, 0, 0);
-      bg_mesh.rotateOnWorldAxis(new Vector3(1, 0, 0), StarPos.degToRad(el+180));
-      bg_mesh.rotateOnWorldAxis(new Vector3(0, 1, 0), StarPos.degToRad(az-45));
-
+      lst = StarUtils.LST(deltaJ, global.config.location.longitude);
+      
+      ha = StarUtils.HA(lst, global.config.location.longitude);
+      [az, alt] = StarUtils.azAndAlt(89.99, global.config.location.latitude, ha);
+      let rotX = StarUtils.degToRad((alt)-90);
+      let rotY = StarUtils.degToRad(az);
+      bg_mesh.setRotationFromEuler(new THREE.Euler(rotX, rotY, 0));
+      
       for (let s = 0; s < stars.length; s++) {
-        let raDeg = stars[s].ra;
-        let decDeg = stars[s].dec;
-        let dist = stars[s].dist ? Math.log2(stars[s].dist) : 10;
+        if (stars[s].dist > 10) continue;
         
-        lst = StarPos.LST(j2000, ut, global.config.location.longitude);
-        ha = StarPos.HA(lst, raDeg);
-        [el, az] = StarPos.elAndAz(decDeg, global.config.location.latitude, ha);
-        let [x, y, z] = StarPos.sphereToCart(el, az, dist);
-        spheres[s].position.set(x, y, z);
+        [x,y,z] = starPos(stars[s], lst);
+        
+        spheres[s].position.set(x, y, -z);
       }
+      console.log(scene.children.length);
     }
 
     // Setup an animation loop
@@ -184,15 +134,67 @@ export default function Starmap(props) {
     render();
   }
 
-	return (
-		<>
-      {/* Remove Orbit Controls. Implement static position camera, with rotating around and fov zoom. */}
-      <OrbitControlsView style={{ flex: 1}} camera={camera}>
-			<GLView
+  function starPos(star, lst) {
+    let [az, alt] = StarUtils.azAndAlt(star.dec, global.config.location.latitude, StarUtils.HA(lst, star.ra));
+    return StarUtils.sphereToCart(az, alt, star.dist);
+  }
+
+  function getClickedStar(event) {
+
+  }
+
+  function worldToScreen(x, y, z, w) {
+    
+  }
+
+  function testUtils(scene) {
+    scene.add(new THREE.GridHelper(10, 10));
+
+    // EAST
+    scene.add(new THREE.ArrowHelper(
+      new THREE.Vector3(1, 0, 0).normalize(),
+      new THREE.Vector3(0, 0, 0),
+      5,
+      0xff0000
+    ));
+    // UP
+    scene.add(new THREE.ArrowHelper(
+      new THREE.Vector3(0, 1, 0).normalize(),
+      new THREE.Vector3(0, 0, 0),
+      5,
+      0x00ff00
+    ));
+    // NORTH
+    scene.add(new THREE.ArrowHelper(
+      new THREE.Vector3(0, 0, -1).normalize(),
+      new THREE.Vector3(0, 0, 0),
+      5,
+      0x0000ff
+    ));
+  }
+
+  let toRender = <View style={{ flex: 1 }} onPress>
+    <GLView
+      style={{ flex: 1 }}
+      onContextCreate={onContextCreate}
+    />
+</View>;
+
+  if (true) {
+    toRender = <View style={{ flex: 1 }} onPress>
+    <OrbitControlsView style={{ flex: 1}} camera={mapCamera}>
+      <GLView
         style={{ flex: 1 }}
         onContextCreate={onContextCreate}
       />
-      </OrbitControlsView>
+    </OrbitControlsView>
+  </View>;
+  }
+
+	return (
+		<>
+      {/* Remove Orbit Controls. Implement static position camera, with rotating around and fov zoom. */}
+      {toRender}
 		</>
 	);
 }
