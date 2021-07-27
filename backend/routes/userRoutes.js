@@ -1,64 +1,36 @@
-const express = require("express");
-const path = require('path');
-const { check, validationResult } = require('express-validator');
-const router = express.Router();
-const user = require('../models/user');
+const express = require('express');
+const { check } = require('express-validator');
+const UserController = require('../controllers/user_controller.js')
+const app = express();
 
 
-//signup
-router.post('/signup',[
-    // Empty and Format validations
-    check('username', "Please Enter a Valid Username").not().isEmpty(),
-    check('email', "Please enter a valid email")
-      .isEmail()
-      .not().isEmpty(),
-    check('password', "Please enter a valid password")
-      .not().isEmpty()
-      .isLength({min: 8})
-	],async(req, res) => {
-		
-	const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-  
-  // request entries
-  const { username, email, password } = req.body;
 
-  // check for unique email and username
-  let Email = await user.findOne({
-      email
-  });
+app.post('/signup',[
+  // Empty and Format validations
+  check('username', "Please Enter a Valid Username").not().isEmpty(),
+  check('email', "Please enter a valid email")
+    .isEmail()
+    .not().isEmpty(),
+  check('password', "Please enter a valid password")
+    .not().isEmpty()
+    .isLength({min: 8})
+], UserController.register);
 
-  if (Email) {
-    return res.status(400).json({
-      msg: "Email Already Exists"
-    });
-  }
-  
-  let userName = await user.findOne({
-      username
-    });
-  if (userName) {
-    return res.status(400).json({
-      msg: "username Already Exists"
-    });
-  }
+app.post( "/login",[
+  check('username', "Please Enter a Valid Username").not().isEmpty(),
+  check("password", "Please enter a valid password").isLength({ min: 8 })
+], UserController.login);
 
-  // user is created
-	const User = new user({
-		username: username,
-        email: email,
-        password: password
-	})
-	try {
-			const newUser = await User.save()
-			res.status(201).json(newUser)
-	}catch(err){
-		console.log(err.message);
-		res.status(500).send("Error in Saving");
-	}
-});
+app.post('/reset-password', UserController.resetPasswordEmail);
+
+app.post('/reset/:idToken/:pwToken', [
+  check("password", "Please enter a valid password").isLength({ min: 8 })
+], UserController.resetPassword);
+
+app.post('/verify-email', UserController.verifyEmail);
+
+app.get('/verify/:verificationToken', UserController.verify);
+
 
 //login
 router.post( "/login",[

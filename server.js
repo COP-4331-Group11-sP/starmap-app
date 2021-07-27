@@ -1,5 +1,5 @@
 // Environment Setup
-const PORT = 5001; // PAUL: 5001, ANDY: 5002, PHILLIP: 5003, JAZZY: 5004
+const PORT = 5003; // PAUL: 5001, ANDY: 5002, PHILLIP: 5003, JAZZY: 5004, KYLE: 5005, MICHE: 5006, REMI: 5007
 
 if (process.env.NODE_ENV !== 'production') {
     require('dotenv').config();
@@ -73,8 +73,9 @@ try {
 
 // API Routers
 const userRouter = require(path.join(__dirname, urls.backend, urls.routes, '/userRoutes.js'));
-
+const faveRouter = require(path.join(__dirname, urls.backend, urls.routes, '/faveRoute.js'));
 app.use(userRouter);
+app.use(faveRouter);
 
 
 
