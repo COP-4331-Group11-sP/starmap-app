@@ -47,7 +47,7 @@ exports.addFave = async (req, res) => {
 }
 
 // Delete Favorite Star
-exports.deleteFave = async (req, res) => {
+exports.deleteFave = async (request, response) => {
   try {   
     const favorite = await Fave.findByIdAndDelete(request.body);
     if (!favorite) response.status(404).send("No item found");
