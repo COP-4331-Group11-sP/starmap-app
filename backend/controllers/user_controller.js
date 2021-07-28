@@ -1,10 +1,11 @@
 const nodemailer = require('nodemailer');
 const jwt = require("jsonwebtoken");
+const token = require("./jwt_controller.js");
 const bcrypt = require('bcrypt');
 const { validationResult } = require('express-validator');
 const saltRounds = 10;
 const User = require('../models/user.js');
-const PORT = ":5004";
+const PORT = ":5003";
 
 const transporter = nodemailer.createTransport({
 	service: "Gmail",
@@ -77,8 +78,10 @@ exports.login = async (req, res) => {
     if (!validPassword){
       return res.status(400).json({ message: "Invalid Password"});
     }
-    //return res.send("ciao");
-    return res.status(200).json({})
+
+    access = token.generateAccessToken(signIn._id);
+    return res.status(200).json({access});
+
   }catch (e) {
     console.error(e);
     res.status(500).json({ message: "Server Error" });
@@ -86,11 +89,11 @@ exports.login = async (req, res) => {
 }
 
 exports.resetPasswordEmail = async (req, res) => {
-  const { email } = req.body;
   // Check we have an email
   if (!email) {
     return res.status(422).send({ message: "Missing email." });
   }
+
   try {
     // Check if the email is in use
     const existingUser = await User.findOne({ email }).exec();
@@ -177,11 +180,16 @@ exports.resetPassword = async (req, res) => {
 }
 
 exports.verifyEmail = async (req, res) => {
-    const { email } = req.body;
+    const { email, access } = req.body;
     // Check we have an email
     if (!email) {
        return res.status(422).send({ message: "Missing email." });
     }
+
+    if (token.checkExpiry(access)) {
+      return res.status(422).send({ message: "JWT expired" }); // return to login page
+    }
+
     try{
        // Find user
        const existingUser = await User.findOne({ email }).exec();

@@ -1,8 +1,14 @@
 const Fave = require('../models/fave.js');
+const jwt = require('jsonwebtoken');
+const token = require('./jwt_controller.js');
 
 //UPDATES FAVORITE STAR
 exports.updateFave = async (req, res) => {
-  const { docID, Notes } = req.body;
+  const { docID, Notes, access } = req.body;
+
+  if (token.checkExpiry(access)) {
+    return res.status(422).send({ message: "JWT expired" }); // return to login page
+  }
 
   try {
     await Fave.findByIdAndUpdate({ _id : docID }, { notes : Notes });
@@ -16,9 +22,16 @@ exports.updateFave = async (req, res) => {
 
 //ADDS FAVORITE STAR
 exports.addFave = async (req, res) => {
-  const { displayId, starId, userId, notes } = req.body;
+  const { displayId, starId, notes, access } = req.body;
 
-  let duplicates = await Fave.find({starId, userId})
+  if (token.checkExpiry(jwt)) {
+    return res.status(422).send({ message: "JWT expired"}) // return to login page
+  }
+
+  const ud = jwt.verify(access, process.env.ACCESS_TOKEN);
+  var id = ud.payload.ID;
+
+    let duplicates = await Fave.find({starId, id})
   duplicates = duplicates.length;
 
   // prevents duplicate starId
@@ -34,13 +47,13 @@ exports.addFave = async (req, res) => {
   const fave = new Fave({
       displayId: displayId,
       starId: starId,
-      userId: userId,
+      userId: id,
       notes: notes
-  })
+  });
 
   try {
-    const newFave = await fave.save()
-    res.status(200).json(newFave)
+    const newFave = await fave.save();
+    res.status(200).json(newFave);
   } catch (err) {
       response.status(500).send(error);
   }
@@ -48,8 +61,14 @@ exports.addFave = async (req, res) => {
 
 // Delete Favorite Star
 exports.deleteFave = async (req, res) => {
+  const { starID, access } = req.body;
+
+  if (token.checkExpiry(access)) {
+    return res.status(422).send({ message: "JWT expired"}); // return to login page
+  }
+
   try {   
-    const favorite = await Fave.findByIdAndDelete(request.body);
+    const favorite = await Fave.findByIdAndDelete(starID);
     if (!favorite) response.status(404).send("No item found");
     response.status(200).send();
   } catch (error) {
@@ -59,18 +78,26 @@ exports.deleteFave = async (req, res) => {
 
 // Search Favorite Star
 exports.searchFave = async (req, res) => {
-  const { displayId, userId } = req.body;
-  const search = displayId
-  const regex = new RegExp(search, 'i') // i for case insensitive
+  const { displayId, access } = req.body;
+
+  if (token.checkExpiry(access)) {
+    return res.status(422).send({ message: "JWT expired"}) // return to login page
+  }
+
+  const ud = jwt.verify(access, process.env.ACCESS_TOKEN);
+  var id = ud.payload.ID;
+
+  const search = displayId;
+  const regex = new RegExp(search, 'i'); // i for case insensitive
   
-  let Favorites = await Fave.find({displayId: {$regex: regex}, userId})
+  let Favorites = await Fave.find({displayId: {$regex: regex}, id});
   if (!Favorites) response.status(404).send("No item found");
 
   try {
-    res.status(200).json(Favorites)
+    res.status(200).json(Favorites);
   } catch (err) {
       response.status(500).send(error);
   }
-  }
+}
 
 
