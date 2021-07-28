@@ -49,7 +49,7 @@ export default class StarUtils {
 	// Astronomical Formulae for Calculators
 	// Jean Meeus
 	// Chapter 3: Julian Day and Calendar Date. PG's 23, 24, 25
-	static deltaJ(utc, test=false) {
+	static deltaJ(utc, ) {
 		let y, m, A, B, D;
 		if (utc.month <= 2) {
 			y = utc.year - 1;
@@ -62,16 +62,14 @@ export default class StarUtils {
 		A = Math.floor(y / 100);
 		B = 2 - A + Math.floor(A / 4);
 		D = utc.date + this.timeToFrac(utc.hours, utc.minutes, utc.seconds);
-		if (test)
-			console.log(`y: ${y}, m: ${m}\nA: ${A}, B: ${B}, D: ${D}`);
 		return Math.floor(365.25 * y) + Math.floor(30.6001 * (m + 1)) + D + 1720994.5 + B;
 	}
 	// formula found from https://www.aa.quae.nl/en/reken/sterrentijd.html
-	static LST(deltaJ, long, test=false) {
-		return (this.GST(deltaJ, test) + long) % 360;
+	static LST(deltaJ, long) {
+		return (this.GST(deltaJ) + long) % 360;
 	}
 	
-	static GST(deltaJ, test=false) {
+	static GST(deltaJ) {
 		let deltaJD = Math.floor(deltaJ) + 0.5;
 		let j2000 = 2415020.0;
 
@@ -84,18 +82,6 @@ export default class StarUtils {
 		let bHours = (bRevs - Math.floor(bRevs)) * 24;
 		let bFrac = (deltaJ - deltaJD) * 24 * 1.002737908;
 		let bst = ((bHours + bFrac) * 15) % 360;
-
-		if (test) {
-			console.log(`
-JD: ${deltaJD} T: ${T}
-b0: ${b0} b1: ${b1} b2: ${b2}
-${bRevs} revolutions
-${bHours} hours
-${bFrac} more hours
-${bst} sidereal angle
-${this.degToTime(bst).hours}:${this.degToTime(bst).minutes}:${this.degToTime(bst).seconds} 
-`);
-		}
 
 		return bst;
 	}
@@ -126,18 +112,12 @@ ${this.degToTime(bst).hours}:${this.degToTime(bst).minutes}:${this.degToTime(bst
 		return [az, alt];
 	}
 
-	static sphereToCart(az, alt, dist, test=false) {
+	static sphereToCart(az, alt, dist) {
 		let radAz = this.degToRad(az);
 		let radAlt = this.degToRad(alt);
-		let x = dist * Math.sin(radAz) * Math.cos(radAlt);
-		let y = dist * Math.sin(radAlt);
-		let z = dist * Math.cos(radAz) * Math.cos(radAlt);
-		if (test) {
-			console.log(`cos(AZ) = ${Math.cos(radAz)}\tsin(AZ) = ${Math.sin(radAz)}
-cos(ALT) = ${Math.cos(radAlt)}\tsin(ALT) = ${Math.sin(radAlt)}
-AZ = ${az}\tALT = ${alt}
-radAZ = ${radAz}\tradALT = ${radAlt}`);
-		}
+		let x = dist * Math.cos(radAz) * Math.cos(radAlt);
+		let y = dist * Math.sin(radAz) * Math.cos(radAlt);
+		let z = -dist * Math.sin(radAlt);
 		return [x, y, z];
 	}
 }

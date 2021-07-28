@@ -14,8 +14,22 @@ def temp(bv):
 	temp = clamp(4600 * (1 / (0.92 * bv + 1.7) + 1 / (0.92 * bv + 0.62)), 1000, 40000)
 	return round(temp / 100.0) * 100
 
-tempToColor = pd.read_csv('tempToColor.csv', index_col='K')
+def temp_exact(bv):
+	return clamp(4600 * (1 / (0.92 * bv + 1.7) + 1 / (0.92 * bv + 0.62)), 1000, 40000)
 
+def radius(bv, lum):
+	solar_mag = 3.85 * 10**26
+	delta = 5.671 * 10**-8
+	L = lum * solar_mag
+	T = bv.apply(lambda bv: temp_exact(bv))
+	return np.sqrt(L / (4 * math.pi * delta * T**4))
+
+
+
+tempToColor = pd.read_csv('./data/tempToColor.csv', index_col='K')
+
+'''
+For usage with the HIP Database
 catalog = 'I/239/hip_main'
 columns = ['_RA.icrs','_DE.icrs','B-V', 'Plx', 'HIP', 'Vmag']
 
@@ -28,10 +42,12 @@ catalog_list = v.get_catalogs([catalog])
 print('Request finished.\n')
 print('Processing data...')
 df = catalog_list[catalog].to_pandas()
+
+
 # cleaning data
 df = df[df['B-V'].notna()]
-df = df[df['_RA.icrs'].notna()]
-df = df[df['Vmag'].notna()]
+df = df[df['ra'].notna()]
+df = df[df['appMag'].notna()]
 df = df[~(df['Plx'] == 0)]
 
 df.rename(columns = {'_RA.icrs': 'ra', '_DE.icrs': 'dec', 'Vmag': 'appMag'}, inplace=True)
@@ -43,31 +59,43 @@ df['dist'] = df['Plx'].apply(lambda p: 1000/abs(p))
 df['absMag'] = df['appMag'] - df['dist'].apply(lambda d: 5 * np.log10(d) - 5)
 
 df['id'] = df['HIP'].apply(lambda n: 'HIP ' + str(n))
+'''
+
+df = pd.read_csv('./data/hygdata_v3.csv', header=0)
+
+
+df.rename(columns = {'mag': 'appMag', 'absmag': 'absMag', 'ci': 'B-V'}, inplace=True)
+df['ra'] = df['ra'] * 15;
+
+df['radius'] = radius(df['B-V'], df['lum'])
 
 print('Data processing finished.\n')
-'''
-managedSimbad.ROW_LIMIT = -1
-managedSimbad.TIMEOUT = 600
-managedSimbad.remove_votable_fields('coordinates')
-
-print('Making id request...')
-result_table = managedSimbad.query_objects(df['HIP'].to_list())
-print('Request finished. Processing id...')
-df['id'] = result_table.to_pandas()['MAIN_ID']
-print('Id processing finished.\n')
-'''
 
 print('Processing color...')
 df['color'] = df['B-V'].apply(lambda bv: tempToColor.loc[temp(bv)])
-df = df.drop(['B-V', 'Plx', 'HIP', 'appMag'], axis=1)
+# for HIP catalogue
+# df = df.drop(['B-V', 'Plx', 'HIP'], axis=1)
+
+# for HYG catalogue
+df = df[['id', 'proper', 'ra', 'dec', 'appMag', 'absMag', 'dist', 'radius', 'color']]
+
+dfs = np.array_split(df, 11)
 print('Color processing finished.\n')
 print('Writing to files...')
-result_json = df.to_json(orient='records', indent=2)
-result_parsed = json.loads(result_json)
-with open('./stars.json', 'w') as out:
-	out.write(result_json)
+columns = df.to_json(orient='split')
+columns = json.loads(columns)
+columns = columns['columns']
+columns = json.dumps(columns)
 
-result_json = df['id'].to_json(orient='values', indent=2)
-with open('./ids.json', 'w') as out:
-	out.write(result_json)
+
+#print('\tWriting to ./data/columns.json...')
+#with open('./data/columns.json', 'w') as out:
+#	out.write(columns)
+
+for d in range(len(dfs)):
+	fname = './data/stars_' + str(d) + '.json'
+	print('\tWriting to ' + fname + '...')
+	with open('./data/stars_' + str(d) + '.json', 'w') as out:
+		out.write(dfs[d].to_json(orient='values'))
+
 print('Completed.\n')
