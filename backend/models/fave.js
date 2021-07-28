@@ -20,5 +20,4 @@ const faveSchema = new mongoose.Schema({
 });
 
 const fave = mongoose.model("favorites", faveSchema);
-
 module.exports = fave;
