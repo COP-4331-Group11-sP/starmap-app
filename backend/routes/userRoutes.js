@@ -4,7 +4,7 @@ const UserController = require('../controllers/user_controller.js')
 const app = express();
 
 
-
+//signup
 app.post('/api/signup',[
   // Empty and Format validations
   check('username', "Please Enter a Valid Username").not().isEmpty(),
@@ -16,19 +16,19 @@ app.post('/api/signup',[
     .isLength({min: 8})
 ], UserController.register);
 
+//login
 app.post( "/api/login",[
   check('username', "Please Enter a Valid Username").not().isEmpty(),
   check("password", "Please enter a valid password").isLength({ min: 8 })
 ], UserController.login);
 
 app.post('/api/reset-password', UserController.resetPasswordEmail);
-
 app.post('/api/reset/:idToken/:pwToken', [
   check("password", "Please enter a valid password").isLength({ min: 8 })
 ], UserController.resetPassword);
 
 app.post('/api/verify-email', UserController.verifyEmail);
-
 app.get('/api/verify/:verificationToken', UserController.verify);
 
-module.exports = router;
+
+module.exports = app;
