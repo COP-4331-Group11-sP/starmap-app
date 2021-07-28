@@ -3,7 +3,7 @@ import { ExpoWebGLRenderingContext, GLView } from "expo-gl";
 import { Renderer, TextureLoader, THREE } from "expo-three";
 import StarControlsView from './cameras/StarControlsView';
 import { View } from 'react-native';
-import StarUtils from './star-pos';
+import StarUtils from './star-utils';
 import '../config';
 
 
@@ -189,8 +189,8 @@ export default function Starmap(props) {
 
       const latRad = StarUtils.degToRad(global.config.location.latitude);
 
-      const rotY = new THREE.Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), latRad - Math.PI/2);
-      const rotZ = new THREE.Quaternion().setFromAxisAngle(new Vector3(0, 0, -1), -StarUtils.degToRad(lst));
+      const rotY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), latRad - Math.PI/2);
+      const rotZ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, -1), -StarUtils.degToRad(lst));
 
       const rotFin = new THREE.Quaternion().multiplyQuaternions(rotZ, rotY);
 
