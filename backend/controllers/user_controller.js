@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const { validationResult } = require('express-validator');
 const saltRounds = 10;
 const User = require('../models/user.js');
-const PORT = ":5003";
+const PORT = ":5004";
 
 const transporter = nodemailer.createTransport({
 	service: "Gmail",
@@ -46,7 +46,7 @@ exports.register = async (req, res) => {
   const hash = bcrypt.hashSync(password, saltRounds);
 
   // user is created
-  const user = new user({
+  const user = new User({
     username: username,
         email: email,
         password: hash
@@ -246,4 +246,3 @@ exports.verify = async (req, res) => {
   return res.status(500).send(err);
   }
 }
-
