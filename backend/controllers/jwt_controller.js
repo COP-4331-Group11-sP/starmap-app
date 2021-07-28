@@ -7,13 +7,13 @@ exports.generateAccessToken = function( id ) {
 generateToken = function( id ) {
   const secret = process.env.ACCESS_TOKEN;
 
-  const Token = jwt.sign(
+  const accessToken = jwt.sign(
     { ID: id },
     secret,
     { expiresIn: "1h" }
   );
 
-  return Token;
+  return accessToken;
 }
 
 exports.checkExpiry = function( token ) {

@@ -79,8 +79,8 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid Password"});
     }
 
-    access = token.generateAccessToken(signIn._id);
-    return res.status(200).json({access});
+    accessToken = token.generateAccessToken(signIn._id);
+    return res.status(200).json(accessToken);
 
   }catch (e) {
     console.error(e);
@@ -180,13 +180,13 @@ exports.resetPassword = async (req, res) => {
 }
 
 exports.verifyEmail = async (req, res) => {
-    const { email, access } = req.body;
+    const { email, accessToken } = req.body;
     // Check we have an email
     if (!email) {
        return res.status(422).send({ message: "Missing email." });
     }
 
-    if (token.checkExpiry(access)) {
+    if (token.checkExpiry(accessToken)) {
       return res.status(422).send({ message: "JWT expired" }); // return to login page
     }
 

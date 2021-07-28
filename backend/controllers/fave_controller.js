@@ -4,9 +4,9 @@ const token = require('./jwt_controller.js');
 
 //UPDATES FAVORITE STAR
 exports.updateFave = async (req, res) => {
-  const { docID, Notes, access } = req.body;
+  const { docID, Notes, accessToken } = req.body;
 
-  if (token.checkExpiry(access)) {
+  if (token.checkExpiry(accessToken)) {
     return res.status(422).send({ message: "JWT expired" }); // return to login page
   }
 
@@ -22,13 +22,13 @@ exports.updateFave = async (req, res) => {
 
 //ADDS FAVORITE STAR
 exports.addFave = async (req, res) => {
-  const { displayId, starId, notes, access } = req.body;
+  const { displayId, starId, notes, accessToken } = req.body;
 
-  if (token.checkExpiry(jwt)) {
+  if (token.checkExpiry(accessToken)) {
     return res.status(422).send({ message: "JWT expired"}) // return to login page
   }
 
-  const ud = jwt.verify(access, process.env.ACCESS_TOKEN);
+  const ud = jwt.verify(accessToken, process.env.ACCESS_TOKEN);
   var id = ud.payload.ID;
 
     let duplicates = await Fave.find({starId, id})
@@ -61,9 +61,9 @@ exports.addFave = async (req, res) => {
 
 // Delete Favorite Star
 exports.deleteFave = async (req, res) => {
-  const { starID, access } = req.body;
+  const { starID, accessToken } = req.body;
 
-  if (token.checkExpiry(access)) {
+  if (token.checkExpiry(accessToken)) {
     return res.status(422).send({ message: "JWT expired"}); // return to login page
   }
 
@@ -78,13 +78,13 @@ exports.deleteFave = async (req, res) => {
 
 // Search Favorite Star
 exports.searchFave = async (req, res) => {
-  const { displayId, access } = req.body;
+  const { displayId, accessToken } = req.body;
 
-  if (token.checkExpiry(access)) {
+  if (token.checkExpiry(accessToken)) {
     return res.status(422).send({ message: "JWT expired"}) // return to login page
   }
 
-  const ud = jwt.verify(access, process.env.ACCESS_TOKEN);
+  const ud = jwt.verify(accessToken, process.env.ACCESS_TOKEN);
   var id = ud.payload.ID;
 
   const search = displayId;
