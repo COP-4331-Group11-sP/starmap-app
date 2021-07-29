@@ -78,7 +78,7 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid Password"});
     }
     
-    return res.status(200).json({signIn._id})
+    return res.status(200).json({signIn})
   }catch (e) {
     console.error(e);
     res.status(500).json({ message: "Server Error" });
