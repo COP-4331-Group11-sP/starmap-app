@@ -57,7 +57,7 @@ exports.deleteFave = async (req, res) => {
 // Search Favorite Star
 exports.searchFave = async (req, res) => {
   const { starId, userId } = req.body;
-  const regex = new RegExp(starId, 'i') // i for case insensitive
+  const regex = new RegExp(starId, 'i'); // i for case insensitive
   
   let favorites = await Fave.find({starId: {$regex: regex}, userId});
   if (!favorites) res.status(404).send("No item found");

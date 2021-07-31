@@ -2,26 +2,10 @@ import * as React from 'react';
 import { ExpoWebGLRenderingContext, GLView } from "expo-gl";
 import { Renderer, TextureLoader, THREE } from "expo-three";
 import StarControlsView from './cameras/StarControlsView';
+import StarInfoCard from '../components/StarInfoCard';
 import { View } from 'react-native';
 import StarUtils from './star-utils';
-import '../config';
 
-
-const starIdx = require('./data/columns.json');
-
-let stars = [];
-
-stars = stars.concat(require('./data/stars_0.json'));
-stars = stars.concat(require('./data/stars_1.json'));
-stars = stars.concat(require('./data/stars_2.json'));
-stars = stars.concat(require('./data/stars_3.json'));
-stars = stars.concat(require('./data/stars_4.json'));
-stars = stars.concat(require('./data/stars_5.json'));
-stars = stars.concat(require('./data/stars_6.json'));
-stars = stars.concat(require('./data/stars_7.json'));
-stars = stars.concat(require('./data/stars_8.json'));
-stars = stars.concat(require('./data/stars_9.json'));
-stars = stars.concat(require('./data/stars_10.json'));
 
 
 global.THREE = global.THREE || THREE;
@@ -70,20 +54,28 @@ const fragmentCode = `
   }
 `;
 
+//const bgImage = require('./PANO_MellingerRGB.jpg');
+const fontLoader = new THREE.FontLoader();
 
-let selectedStar = null;
+let font = fontLoader.parse( require( 'three/examples/fonts/optimer_regular.typeface.json' ) );
+
 export default function Starmap(props) {
+  const [selectedStar, setSelectedStar] = React.useState(null);
+  const [particles, setParticles] = React.useState(null);
+
+
   const [mapCamera, setMapCamera] = React.useState(null);
   const [mapRender, setMapRender] = React.useState(null);
   const [mapScene, setMapScene] = React.useState(null);
-  const [particles, setParticles] = React.useState(null);
+
+  let offset = {x: 0, y: 0};
+
   const clock = new THREE.Clock();
 
 	let timeout;
 
   React.useEffect(() => {
     // Clear the animation loop when the component unmounts
-    
     return () => clearTimeout(timeout);
   }, []);
 
@@ -108,7 +100,10 @@ export default function Starmap(props) {
     setMapScene(scene);
     scene.fog = new THREE.Fog(sceneColor, 1, 10000);
 
-    if (utils) testUtils(scene);
+    scene.add(generateText('N', new THREE.Vector3(0, 0, -50), camera));
+    scene.add(generateText('E', new THREE.Vector3(50, 0, 0), camera));
+    scene.add(generateText('S', new THREE.Vector3(0, 0, 50), camera));
+    scene.add(generateText('W', new THREE.Vector3(-50, 0, 0), camera));
     
     const ambientLight = new THREE.AmbientLight(0x101010);
     scene.add(ambientLight);
@@ -125,23 +120,23 @@ export default function Starmap(props) {
     const selected = [];
     const rotationMatrix = new THREE.Matrix4();
 
-    for (let s = 0; s < stars.length; s++) {
+    for (let s = 0; s < global.stars.length; s++) {
       
-      const [x, y, z] = StarUtils.sphereToCart(stars[s][starIdx.ra], stars[s][starIdx.dec], 100 + stars[s][starIdx.dist] / 100);
+      const [x, y, z] = StarUtils.sphereToCart(global.stars[s][global.starIdx.ra], global.stars[s][global.starIdx.dec], 100 + global.stars[s][global.starIdx.dist] / 1000);
 
       // Hide uncertain stars
-      if (stars[s][starIdx.dist] >= 100000)
+      if (global.stars[s][global.starIdx.dist] >= 100000)
         positions.push(0, 0, 100000);
       else 
         positions.push( x, y, z );
       
       
-      const color = new THREE.Color(stars[s][starIdx.color]);
+      const color = new THREE.Color(global.stars[s][global.starIdx.color]);
       colors.push( color.r, color.g, color.b );
 
       // god gave us: https://astronomy.stackexchange.com/questions/36406/best-way-to-simulate-star-sizes-to-scale-in-celestial-sphere
-      const size = Math.pow(10, (-1.44 - stars[s][starIdx.appMag]) / 5);
-      if (stars[s][starIdx.proper] == 'Vega') {
+      const size = Math.pow(10, (-1.44 - global.stars[s][global.starIdx.appMag]) / 5);
+      if (global.stars[s][global.starIdx.proper] == 'Vega') {
         console.log(size, x, y, z);
       }
 
@@ -178,16 +173,17 @@ export default function Starmap(props) {
     scene.add( starParticles );
 
     
+    
     function update() {
       time = StarUtils.getUTC(new Date());
       
       deltaJ = StarUtils.deltaJ(time);
       
-      lst = StarUtils.LST(deltaJ, global.config.location.longitude);
+      lst = StarUtils.LST(deltaJ, global.longlat.longitude);
       
       starParticles.material.uniforms.zoom.value = camera.zoom;
 
-      const latRad = StarUtils.degToRad(global.config.location.latitude);
+      const latRad = StarUtils.degToRad(global.longlat.latitude);
 
       const rotY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), latRad - Math.PI/2);
       const rotZ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, -1), -StarUtils.degToRad(lst));
@@ -215,86 +211,65 @@ export default function Starmap(props) {
     render();
   }
 
-  function getSelectedStar() {
-    return stars[selectedStar];
-  }
-
-  function starInteraction(position) {
+  function starSelection(position) {
     let raycaster = new THREE.Raycaster();
     let renderWindow = new THREE.Vector2();
+
     mapRender.getSize(renderWindow);
 
     let coords = new THREE.Vector2();
-    coords.x = ( position.x / renderWindow.x ) * 2 - 1;
-	  coords.y = - ( position.y / renderWindow.y ) * 2 + 1;
-    raycaster.params.Points.threshold = 1 - (mapCamera.zoom * 0.01);
+    coords.x = ( (position.x - offset.x) / renderWindow.x ) * 2 - 1;
+	  coords.y = - ( (position.y - offset.y ) / renderWindow.y ) * 2 + 1;
+
+    raycaster.params.Points.threshold = 5 / (mapCamera.zoom);
     raycaster.setFromCamera( coords, mapCamera );
 
 		const intersects = raycaster.intersectObject( particles );
     const attributes = particles.geometry.attributes;
+
     if (intersects.length > 0) {
       let biggest = intersects[ 0 ].index;
       
       for (let i = 1; i < intersects.length; i++) {
-        if (stars[biggest][starIdx.appMag] > stars[intersects[ i ].index][starIdx.appMag]) {
-          biggest = intersects[ i ].index;
+        let newStarIdx = intersects[ i ].index;
+
+        if (global.stars[biggest][global.starIdx.appMag] > global.stars[newStarIdx][global.starIdx.appMag]) {
+          biggest = newStarIdx;
         }
       }
-      
+
       if (selectedStar)
         attributes.isSelected.array[selectedStar] = 0;
       attributes.isSelected.array[biggest] = 1;
       attributes.isSelected.needsUpdate = true;
-      selectedStar = biggest;
+      setSelectedStar(biggest);
     }
   }
 
-  function testUtils(scene) {
-    // NORTH
-    scene.add(new THREE.ArrowHelper(
-      new THREE.Vector3(0, 0, -1).normalize(),
-      new THREE.Vector3(0, 0, 0),
-      5,
-      0xff0000
-    ));
-    // EAST
-    scene.add(new THREE.ArrowHelper(
-      new THREE.Vector3(1, 0, 0).normalize(),
-      new THREE.Vector3(0, 0, 0),
-      5,
-      0xff5050
-    ));
-    // SOUTH
-    scene.add(new THREE.ArrowHelper(
-      new THREE.Vector3(0, 0, 1).normalize(),
-      new THREE.Vector3(0, 0, 0),
-      5,
-      0xff8080
-    ));
-    // WEST
-    scene.add(new THREE.ArrowHelper(
-      new THREE.Vector3(-1, 0, 0).normalize(),
-      new THREE.Vector3(0, 0, 0),
-      5,
-      0xffc0c0
-    ));
-    // UP
-    scene.add(new THREE.ArrowHelper(
-      new THREE.Vector3(0, 1, 0).normalize(),
-      new THREE.Vector3(0, 0, 0),
-      5,
-      0xffeeee
-    ));
+  function generateText(text, position, camera) {
+    const textMat = new THREE.MeshBasicMaterial({opacity: 0.6, transparent: true, color: '#ffffff'});
+    const geo = new THREE.TextGeometry(text, {font: font, size: 4, height: 1});
+    geo.computeBoundingBox();
+    let center = -0.5 * (geo.boundingBox.max.x - geo.boundingBox.min.x);
+    const mesh = new THREE.Mesh( geo, textMat );
+    mesh.position.set(position.x - center, position.y, position.z);
+    mesh.rotation.y = Math.atan2( ( camera.position.x - mesh.position.x ), ( camera.position.z - mesh.position.z ) );
+    return mesh;
   }
 
 	return (
-		<View style={{ flex: 1 }} onPress>
-      <StarControlsView style={{ flex: 1}} camera={mapCamera} starInteraction={starInteraction}>
+		<View style={{ flex: 1 }} onLayout={event => {
+      const { x, y } = event.nativeEvent.layout;
+      offset = {x, y};
+      console.log({x, y}, offset);
+    }}>
+      <StarControlsView style={{ flex: 1}} camera={mapCamera} starInteraction={starSelection}>
         <GLView
           style={{ flex: 1 }}
           onContextCreate={onContextCreate}
         />
       </StarControlsView>
+      {selectedStar != null ? <StarInfoCard setSelectedStar={setSelectedStar} selectedStar={selectedStar}  /> : null}
     </View>
 	);
 }

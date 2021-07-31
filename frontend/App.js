@@ -3,7 +3,7 @@ import * as Location from 'expo-location';
 
 
 
-import { View, Image, Text, TouchableOpacity,Platform,Button,ScrollView } from "react-native";
+import { View, Image, Text, TouchableOpacity,Platform,Button,ScrollView, FlatList } from "react-native";
 import { Menu,SearchStyle } from "./styles/menu_styles";
 import { colors, page, text, spacing } from "./assets/global_styles";
 import { Header, ListItem, Icon,SearchBar,BottomSheet,Card } from "react-native-elements";
@@ -13,29 +13,57 @@ import MenuIcon from './components/MenuIcon';
 import MagnifyingGlass from './components/MagnifyingGlass';
 import EyeSlash from './components/EyeSlash';
 import  ShootingStarsIcon  from './components/ShootingStarsIcon';
-import { NavigationContainer, DefaultTheme  } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DrawerActions  } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
 import LeftArrowLine from './components/LeftArrowLine';
 import StarInfoCard from "./components/StarInfoCard";
 import StarIcon from './components/StarIcon';
 import Meteor from './components/Meteor';
 
 import Starmap from './star-env/Starmap';
+import StarUtils from './star-env/star-utils';
 
-import './config';
 
-const Stack = createStackNavigator();
+const Drawer = createDrawerNavigator();
 
+let starData = [];
+
+starData = starData.concat(require('./star-env/data/stars_0.json'));
+starData = starData.concat(require('./star-env/data/stars_1.json'));
+starData = starData.concat(require('./star-env/data/stars_2.json'));
+starData = starData.concat(require('./star-env/data/stars_3.json'));
+starData = starData.concat(require('./star-env/data/stars_4.json'));
+starData = starData.concat(require('./star-env/data/stars_5.json'));
+starData = starData.concat(require('./star-env/data/stars_6.json'));
+starData = starData.concat(require('./star-env/data/stars_7.json'));
+starData = starData.concat(require('./star-env/data/stars_8.json'));
+starData = starData.concat(require('./star-env/data/stars_9.json'));
+starData = starData.concat(require('./star-env/data/stars_10.json'));
 
 export default function App() {
-
-  const [open, setOpen] = React.useState(true);  // corresponds with dropdownmenu's state
+  global.stars = starData;
+  global.starIdx = require( './star-env/data/columns.json');
+  global.baseURL = 'https://constellario.xyz';
   
-  const [value, setValue] = React.useState(""); // corresponds with the searchbar contents
+  global.longlat = {longitude: 0, latitude: 0};
 
-  const [visible,setBarVisible] = React.useState(false);
-  
-  const [errorMsg, setErrorMsg] = React.useState('');
+  function getSelectedStar() {
+    return global.selectedStar;
+  }
+  function setSelectedStar(star) {
+    global.selectedStar = star;
+    setMenuStar(star);
+  }
+
+  function getLocation() {
+    return global.longlat;
+  }
+  function setLocation(longlat) {
+    global.longlat = longlat;
+    console.log(`Latitude: ${global.longlat.latitude}, Longitude: ${global.longlat.longitude}`);
+  }
+
   React.useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -43,392 +71,146 @@ export default function App() {
         setErrorMsg('Permission to access location was denied');
         return;
       }
-
+      
       let loc = await Location.getCurrentPositionAsync({});
-      global.config.location = loc.coords;
+      setLocation(loc.coords);
     })();
   }, []);
-  
-  // const [isMobile,setmobile] = Mobile();
+
+  function CustomDrawerContent(props) {
+    return (
+      <DrawerContentScrollView {...props}>
+        <DrawerItem
+        label={() => <LeftArrowLine />}
+        onPress={props.navigation.closeDrawer}
+        
+        />
+        <DrawerItemList {...props} />
+        <DrawerItem
+        label="Help"
+        onPress={() => Linking.openURL('https://mywebsite.com/help')}
+        activeTintColor={props.activeTintColor}
+        inactiveTintColor={props.inactiveTintColor}
+        />
+      </DrawerContentScrollView>
+    );
+  }
 
 
-  // mess with this themeing
-  const MyTheme = {
-    ...DefaultTheme,
-    colors: {
-      ...DefaultTheme.backgroundColor,
-      primary: 'red',
-      backgroundColor: 'transparent'
-      
-    },
-  };
+  const starScreen = function({navigation}) {
+    const [search, setSearch] = React.useState('');
+    return (
+      <>
+        <Header backgroundColor = "#334f59" containerStyle = {Menu.navbar}>
+          {/* this is the left component(menu) */}
+          <TouchableOpacity  onPress={navigation.toggleDrawer}>
+            <MenuIcon/>
+          </TouchableOpacity>
+          {/* This is the middle component (SearchBar) */}
+          <SearchBar
+            platform="default"
+            containerStyle={{ backgroundColor: "transparent", borderLeftWidth: 1, borderRightWidth: 1, borderRadius: 15, position: "absolute", top: -15, borderBottomColor: "transparent", borderTopColor: "transparent", border: "transparent"}}
+            inputContainerStyle={{ maxHeight: 40, width: Platform.OS == 'web' ? 400 : 250, backgroundColor: "#D8E3E120"}}
+            inputStyle={{}}
+            loadingProps={{}}
+            onChangeText={val => setSearch(val)}
+            placeholder="Type query here..."
+            placeholderTextColor="#888"
+            cancelButtonTitle="Cancel"
+            cancelButtonProps={{}}
+            value={search}
+          />
+        </Header>
+        <Starmap setSelectedStar={setSelectedStar} getSelectedStar={getSelectedStar} getLocation={getLocation}/>
+      </>
+    );
+  }
 
+  let searchResults = [
+    {starId: '1'},
+    {starId: '2'},
+    {starId: '3'},
+    {starId: '4'},
+    {starId: '5'},
+    {starId: '0'},
+    {starId: '118330'}
+  ];
+
+  const favScreen = function({navigation}) {
+    const [results, setResults] = React.useState([]);
+
+    async function searchFavorites() {
+      let payload = {starId: '.*', userId: '60e7bb316b98f0921db705b7'};
+
+      let response = await fetch(global.baseURL + '/api/search-favorites', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json;charset=utf-8'
+          },
+          body: JSON.stringify(payload)
+      });
+      let data = await response.json();
+
+      if (response.status == 200) {
+          return data;
+      } 
+    }
+
+    navigation.addListener('focus', () => {
+      /*searchFavorites()
+      .then(searchResults => {
+        setResults(searchResults);
+      });*/
+      setResults(searchResults);
+    })
+
+    return (
+      <>
+        <Header backgroundColor = "#334f59" containerStyle = {Menu.navbar}>
+          {/* this is the left component(menu) */}
+          <TouchableOpacity  onPress={navigation.toggleDrawer}>
+            <MenuIcon/>
+          </TouchableOpacity>
+        </Header>
+
+          <FlatList
+            style={{flex: 1, backgroundColor: '#222c33'}}
+            contentContainerStyle={{alignItems: 'center', padding: 10 }}
+            numColumns={Platform.OS == 'web' ? 3 : 1}
+            data={results}
+            renderItem={({item}) => {return <StarInfoCard selectedStar={item.starId} faveWindow={true} />}}
+            keyExtractor={item => item.starId}
+          />
+      </>
+    )
+  }
 
 
 
   return (
-      // style={{ backgroundColor: "#0b0f0f"}}
     <SafeAreaProvider style={{ backgroundColor: "#0b0f0f"}} >
-        <Starmap/>
-       
-         {/* This is styling that will show up for web only version */}
-        {Platform.OS === "web" &&
-      
-          <Header
-            backgroundColor = "#334f59"
-            containerStyle = {Menu.navbar}
-            // rightComponent={{ icon: 'home', color: '#fff' }}
-          >
-            {/* this is the left component(menu) */}
-            <TouchableOpacity  onPress={() => setOpen(!open)}>
-              <MenuIcon/>
-            </TouchableOpacity>
-
-            {/* This is the middle component (SearchBar) */}
-        <SearchBar
-          platform="default"
-          containerStyle={{ backgroundColor: "transparent", borderLeftWidth: 1, borderRightWidth: 1, borderRadius: 15, position: "absolute", top: -15, borderBottomColor: "transparent", borderTopColor: "transparent", border: "transparent"}}
-          inputContainerStyle={{ maxHeight: 40, width: 400, backgroundColor: "#D8E3E1", opacity: "0.2"}}
-          inputStyle={{}}
-          leftIconContainerStyle={{}}
-          rightIconContainerStyle={{}}
-          loadingProps={{}}
-          onChangeText={newVal => setValue(newVal)}
-          onClearText={() => console.log(onClearText())}
-          placeholder="Type query here..."
-          placeholderTextColor="#888"
-          cancelButtonTitle="Cancel"
-          cancelButtonProps={{}}
-          onCancel={() => console.log(onCancel())}
-          value={value}
-        />
-            {/* <SearchBar 
-          containerStyle={{backgroundColor:"transparent", borderLeftWidth: 1, borderRightWidth: 1, borderRadius: 15, position: "absolute", top: -15,borderBottomColor: "transparent",borderTopColor:"transparent",border:"transparent"}}
-              // containerStyle = {{backgroundColor:"transparent",borderTopWidth:"none",borderBottomWidth:"none",}}
-          inputContainerStyle={{ maxHeight: 40, width: 400, backgroundColor: "#D8E3E1",opacity: "0.2"}}
-            placeholder="Type Here..."
-          
-            /> */}
-
-            {/* This is the right component (Hide UI button) */}
-            
-            <EyeSlash/>
-          
-
-          </Header>
-
-      }
-
-      
-
-
-      {/* MOBILE VERSION */}
-      {(Platform.OS ==="android" || Platform.OS === "ios") && 
-      
-        <Header
-          backgroundColor="transparent"
-          containerStyle={Menu.navbar}
-          // rightComponent={{ icon: 'search', color: '#fff' }}
-        >
-          {/* this is the left component(menu) */}
-          <TouchableOpacity onPress={() => setOpen(!open)}>
-          <MenuIcon />
-          </TouchableOpacity>
-
-          {/* This is search bar and will be invisible on mobile */}
-          {visible && 
-        <SearchBar
-          platform="default"
-          containerStyle={SearchStyle.MyContainerStyle}
-          inputContainerStyle={{ maxHeight: 40, width: 200, backgroundColor: "transparent",border:"transparent"}}
-          inputStyle={{}}
-          leftIconContainerStyle={{}}
-          rightIconContainerStyle={{}}
-          loadingProps={{}}
-          onChangeText={newVal => setValue(newVal)}
-          onClearText={() => console.log(onClearText())}
-          placeholder="Type query here..."
-          placeholderTextColor="#888"
-          cancelButtonTitle="Cancel"
-          cancelButtonProps={{}}
-          onCancel={() => console.log(onCancel())}
-          value={value}
-        />
-
-        }
-
-          {/* This is the right component (Hide UI button) */}
-          <TouchableOpacity onPress={() => setBarVisible(!visible)}>
-            <MagnifyingGlass height = {35} width = {35}/>
-          </TouchableOpacity>
-
-
-        </Header>
-      
-      }
-
-      <Text style={{ position: "absolute", top: '50%', left: '50%', color: "white",}} onPress={() => alert("ayo")}> HEEEEELLLLLLLOOOOOO</Text>
-
-      {/* <StarInfoCard/> */}
-          {/* {open && <DropDownMenu/>} */}
-        
-
-          {/* This contains the menu navigation and activates on button press */}
-          {open && 
-
-          <NavigationContainer theme ={MyTheme}>
-
-            <Stack.Navigator initialRouteName="Home" headerMode="none" >
-              <Stack.Screen name="Home" component={DropDownMenu} />
-              <Stack.Screen name="Details" component={FavPage} />
-              <Stack.Screen name = "StarList" component ={starsPage}/>
-            </Stack.Navigator>
-          </NavigationContainer>
-          }       
+          <NavigationContainer>
+            <Drawer.Navigator 
+              initialRouteName="Star Map" 
+              headerMode="none" 
+              drawerContent={(props) => <CustomDrawerContent {...props} />} 
+              drawerStyle={{backgroundColor: '#334f59'}}
+              drawerContentOptions={{
+                activeTintColor: '#ffffff',
+                inactiveTintColor: '#ffffff',
+                activeBackgroundColor: '#222c33'
+              }}>
+              <Drawer.Screen name="Star Map" component={starScreen} />
+              <Drawer.Screen name="Favorites" component={favScreen} />
+            </Drawer.Navigator>
+          </NavigationContainer>  
       </SafeAreaProvider>
     );
   }
 
 
-
-function FavPage({ navigation }){
-
-    const list = [
-        {
-            title: "other stuf",
-            
-        },
-
-        {
-            title: 'Stuff',
-            icon: 'av-timer'
-        },
-
-        {
-            title: 'Im Stuf',
-            icon: 'flight-takeoff'
-        },
-
-    ]
-    return(
-      <View style={ Menu.dropDownMenu}>
-
-            <ListItem bottomDivider containerStyle={Menu.NavItems} >
-                {/* <Icon name={item.icon} /> */}
-          {/* <ListItem.Chevron onPress={() => navigation.goBack()}/> */}
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <LeftArrowLine />
-          </TouchableOpacity>
-                <ListItem.Content style={{ alignItems: "center" }}>
-            <ListItem.Title style={{ color: "white" }} >Your Favorite Stars</ListItem.Title>
-                </ListItem.Content>
-            </ListItem>
-
-            {/* Add a page such that every favorite star has a notes page */}
-            {
-                list.map((item, i) => (
-                    <ListItem key={i} bottomDivider containerStyle={Menu.NavItems} onPress={() => alert("im stuf")}>
-                        <Icon name={item.icon}  />
-                    <ListItem.Content style={{ alignItems: "center" }} >
-                      <ListItem.Title style={{ color: "white" }} >{item.title}</ListItem.Title>
-                        </ListItem.Content>
-                        <ListItem.Chevron />
-                    </ListItem>
-                ))
-                
-            }
-
-        </View>
-    );
-}
-
-
-async function getWikiArticles(props) {
-  var emptyShit = []
-
-  var url = ''
-  // for (let place of places) {
-    url = "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=" + "Polaris" + "%22" + "Polaris" + "%22&format=json&srlimit=3&origin=*"
-    // url = "https://api.wikimedia.org/core/v1/wikipedia/en/page/Vega/description"
-    await fetch(url)
-      .then(res => {
-        // console.log(res)
-        // var test = res.json()
-        // console.log(test)
-        // console.log(test.query.search[0].snippet)
-        return res.json()
-      })
-      .then(res => {
-
-        console.log(res)
-        // console.log(res.query.search[0].snippet)
-        
-        // getTheLinks(res.query.search[0].pageid)
-     
-      })
-      
-      .catch(error => {
-        console.log(error)
-      })
-  // }
-}
-
-async function getTheLinks(pageid) {
- 
-    
-    var url = "https://en.wikipedia.org/w/api.php?action=query&prop=info&pageids=" + pageid + "&inprop=url&format=json&origin=*";
-    let response = await fetch(url);
-    let data = await response.json();
-    console.log(data)
-   
-    
-}
   
   
-function starsPage({ navigation }) {
-
-  const list = [
-    {
-      title: "other stuf",
-      
-    },
-
-    {
-      title: 'Stuff',
-      icon: 'av-timer'
-    },
-
-    {
-      title: 'Im Stuf',
-      icon: 'flight-takeoff'
-    },
-
-    {
-      title: "other stuf",
-
-    },
-
-    {
-      title: 'Stuff',
-      icon: 'av-timer'
-    },
-
-    {
-      title: 'Im Stuf',
-      icon: 'flight-takeoff'
-    },
-
-    {
-      title: "other stuf",
-
-    },
-
-    {
-      title: 'Stuff',
-      icon: 'av-timer'
-    },
-
-    {
-      title: 'Im Stuf',
-      icon: 'flight-takeoff'
-    },
-
-    {
-      title: "other stuf",
-
-    },
-
-    {
-      title: 'Stuff',
-      icon: 'av-timer'
-    },
-
-    {
-      title: 'Im Stuf',
-      icon: 'flight-takeoff'
-    },
-
-    {
-      title: "other stuf",
-
-    },
-
-    {
-      title: 'Stuff',
-      icon: 'av-timer'
-    },
-
-    {
-      title: 'Im Stuf',
-      icon: 'flight-takeoff'
-    },
-
-    {
-      title: "other stuf",
-
-    },
-
-    {
-      title: 'Stuff',
-      icon: 'av-timer'
-    },
-
-    {
-      title: 'Im Stuf',
-      icon: 'flight-takeoff'
-    },
-
-    {
-      title: "other stuf",
-
-    },
-
-    {
-      title: 'Stuff',
-      icon: 'av-timer'
-    },
-
-    {
-      title: 'Im Stuf',
-      icon: 'flight-takeoff'
-    },
-
-  ]
-  return (
-    <View style={Menu.dropDownMenu}>
-
-      <ListItem bottomDivider containerStyle={Menu.NavItems} >
-        {/* <Icon name={item.icon} /> */}
-        {/* <ListItem.Chevron onPress={() => navigation.goBack()} /> */}
-        <TouchableOpacity onPress={() => navigation.goBack()}> 
-        <LeftArrowLine/>
-        </TouchableOpacity>
-        <ListItem.Content style={{ alignItems: "center" }}>
-          <ListItem.Title style={{ color: "white" }} >Celestial Bodies</ListItem.Title>
-        </ListItem.Content>
-      </ListItem>
-
-      <ScrollView>
-
-      
-      {
-        list.map((item, i) => (
-          <ListItem key={i} bottomDivider containerStyle={Menu.NavItems} onPress={() => getWikiArticles()}>
-            <Icon name={item.icon} />
-            <ListItem.Content style={{ alignItems: "center" }} >
-              <ListItem.Title style={{ color: "white" }} >{item.title}</ListItem.Title>
-            </ListItem.Content>
-            <ListItem.Chevron />
-          </ListItem>
-        ))
-
-      }
-
-      </ScrollView>
-
-    </View>
-  );
-}
 
 
 

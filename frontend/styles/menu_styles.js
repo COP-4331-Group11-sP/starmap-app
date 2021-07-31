@@ -59,33 +59,49 @@ const SearchStyle =StyleSheet.create({
         top: -15, 
         borderBottomColor: "transparent", 
         borderTopColor: "transparent", 
-        
-
     }
 
 });
 
 
 const InfoBox = StyleSheet.create({
-    
-
     CardContainerStyle:{
         position: "absolute",
-        // top: "50%",
-        top: Platform.OS === "web" ? "50%": "30%",
-        left: Platform.OS === "web" ? "50%": "15%",
-        transform: Platform.OS === "web" ? "translate(-50%,-50%)" : [],
+        top: Platform.OS === "web" ? 10 : null,
+        bottom: Platform.OS === "web" ? null : 20,
+        left: 10,
         zIndex: 1,
-        width: Platform.OS === "web" ?  350:"70%",
-        height: Platform.OS === "web" ? 400: "50%",
-        backgroundColor: "#334f59",
-        // borderStyle: Platform.OS === "web" ? "none" : null,
+        width: 350,
+        height: 250,
+        backgroundColor: "#334f5950",
+        borderRadius: 20,
         borderWidth: 0,
+        padding: 10,
         margin: 0,
     },
+
+    cardText:{
+        color:"white",
+    }
+});
+
+const FavBox = StyleSheet.create({
+    CardContainerStyle:{
+        position: "relative",
+        width: 350,
+        height: 250,
+        backgroundColor: "#334f59",
+        borderRadius: 20,
+        padding: 10,
+        margin: 10
+    },
+
+    cardText:{
+        color:"white",
+    }
 })
 
-export {Menu,SearchStyle,InfoBox};
+export {Menu,SearchStyle,InfoBox, FavBox};
 
 
 

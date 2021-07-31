@@ -24,6 +24,13 @@ export default class StarUtils {
 		return {hours: h, minutes: m, seconds: s};
 	}
 
+	static degToGeo(deg) {
+		let d = Math.floor(deg);
+		let m = Math.floor((deg - d) * 60);
+		let s = Math.floor((deg - d - m/60) * 3600);
+		return {degrees: d, minutes: m, seconds: s};
+	}
+
 	static degToRad(deg) {
 		return deg * (Math.PI / 180);
 	}
@@ -49,7 +56,7 @@ export default class StarUtils {
 	// Astronomical Formulae for Calculators
 	// Jean Meeus
 	// Chapter 3: Julian Day and Calendar Date. PG's 23, 24, 25
-	static deltaJ(utc, ) {
+	static deltaJ(utc) {
 		let y, m, A, B, D;
 		if (utc.month <= 2) {
 			y = utc.year - 1;

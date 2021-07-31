@@ -1,11 +1,10 @@
 {
     "id":0, 
-    "proper":1, 
+    "name":1, 
     "ra":2, 
     "dec":3, 
     "appMag":4, 
     "absMag":5, 
     "dist":6, 
-    "radius":7, 
-    "color":8
+    "color":7
 }

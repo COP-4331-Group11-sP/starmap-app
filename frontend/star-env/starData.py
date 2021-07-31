@@ -17,80 +17,66 @@ def temp(bv):
 def temp_exact(bv):
 	return clamp(4600 * (1 / (0.92 * bv + 1.7) + 1 / (0.92 * bv + 0.62)), 1000, 40000)
 
-def radius(bv, lum):
-	solar_mag = 3.85 * 10**26
-	delta = 5.671 * 10**-8
-	L = lum * solar_mag
-	T = bv.apply(lambda bv: temp_exact(bv))
-	return np.sqrt(L / (4 * math.pi * delta * T**4))
-
-
-
 tempToColor = pd.read_csv('./data/tempToColor.csv', index_col='K')
-
-'''
-For usage with the HIP Database
-catalog = 'I/239/hip_main'
-columns = ['_RA.icrs','_DE.icrs','B-V', 'Plx', 'HIP', 'Vmag']
-
-managedSimbad = Simbad()
-v = Vizier(columns=columns)
-v.ROW_LIMIT = -1
-v.TIMEOUT = 300
-print('Making data request...')
-catalog_list = v.get_catalogs([catalog])
-print('Request finished.\n')
-print('Processing data...')
-df = catalog_list[catalog].to_pandas()
-
-
-# cleaning data
-df = df[df['B-V'].notna()]
-df = df[df['ra'].notna()]
-df = df[df['appMag'].notna()]
-df = df[~(df['Plx'] == 0)]
-
-df.rename(columns = {'_RA.icrs': 'ra', '_DE.icrs': 'dec', 'Vmag': 'appMag'}, inplace=True)
-
-# found from https://astronomy.gatech.edu/Courses/Phys3021/Lectures/pdf/Distances_Motions.pdf
-df['dist'] = df['Plx'].apply(lambda p: 1000/abs(p))
-# df = df[df['dist'].notna()]
-# df = df[~(df['dist'] <= 0)]
-df['absMag'] = df['appMag'] - df['dist'].apply(lambda d: 5 * np.log10(d) - 5)
-
-df['id'] = df['HIP'].apply(lambda n: 'HIP ' + str(n))
-'''
 
 df = pd.read_csv('./data/hygdata_v3.csv', header=0)
 
+print('Processing data...')
+df.drop('id', axis=1, inplace=True)
+
+
+def setname(row):
+	if (row['proper'] != -1):
+		return row['proper']
+	elif (row['hip'] != -1):
+		return 'HIP ' + str(int(row['hip']))
+	elif (row['hd'] != -1):
+		return 'HD ' + str(int(row['hd']))
+	elif (row['hr'] != -1):
+		return 'HR ' + str(int(row['hr']))
+	elif (row['gl'] != -1):
+		return row['gl']
+	elif (row['bf'] != -1):
+		return row['bf']
+
+
+names_columns = ['proper','hip','hd','hr','gl','bf']
+df[names_columns] = df[names_columns].fillna(-1)
+
+df['name'] = df.apply(lambda row: setname(row), axis=1)
 
 df.rename(columns = {'mag': 'appMag', 'absmag': 'absMag', 'ci': 'B-V'}, inplace=True)
-df['ra'] = df['ra'] * 15;
-
-df['radius'] = radius(df['B-V'], df['lum'])
+df['ra'] = df['ra'] * 15; # convert ra from hours to degrees
 
 print('Data processing finished.\n')
 
 print('Processing color...')
 df['color'] = df['B-V'].apply(lambda bv: tempToColor.loc[temp(bv)])
-# for HIP catalogue
-# df = df.drop(['B-V', 'Plx', 'HIP'], axis=1)
 
 # for HYG catalogue
-df = df[['id', 'proper', 'ra', 'dec', 'appMag', 'absMag', 'dist', 'radius', 'color']]
+df.reset_index(inplace=True)
+df.rename(columns = {'index': 'id'}, inplace=True)
+df = df[['id', 'name', 'ra', 'dec', 'appMag', 'absMag', 'dist', 'color']]
+
+
+
 
 dfs = np.array_split(df, 11)
 print('Color processing finished.\n')
+
 print('Writing to files...')
+'''
+# WRITE WHEN COLUMNS ARE NEEDED
 columns = df.to_json(orient='split')
 columns = json.loads(columns)
 columns = columns['columns']
 columns = json.dumps(columns)
 
 
-#print('\tWriting to ./data/columns.json...')
-#with open('./data/columns.json', 'w') as out:
-#	out.write(columns)
+print('\tWriting to ./data/columns.json...')
+with open('./data/columns.json', 'w') as out:
+	out.write(columns)
+'''
 
 for d in range(len(dfs)):
 	fname = './data/stars_' + str(d) + '.json'

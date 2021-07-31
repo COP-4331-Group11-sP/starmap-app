@@ -58,13 +58,6 @@ export class StarControls extends EventDispatcher {
         // Set to false to disable rotating
         this.enableRotate = true;
         this.rotateSpeed = 1.0;
-        // Mouse buttons
-        this.mouseButtons = {
-            LEFT: MOUSE.ROTATE,
-            MIDDLE: MOUSE.DOLLY
-        };
-        // Touch fingers
-        this.touches = { ONE: TOUCH.ROTATE, TWO: TOUCH.DOLLY_PAN };
         // PRIVATE
         //
         // internals
@@ -195,17 +188,14 @@ export class StarControls extends EventDispatcher {
             if (touches.length == 1) {
                 this.rotateStart.set(touches[0].pageX, touches[0].pageY);
             }
-            else {
-                const x = 0.5 * (touches[0].pageX + touches[1].pageX);
-                const y = 0.5 * (touches[0].pageY + touches[1].pageY);
-                this.rotateStart.set(x, y);
-            }
         };
         this.handleTouchStartDolly = ({ touches }) => {
-            const dx = touches[0].pageX - touches[1].pageX;
-            const dy = touches[0].pageY - touches[1].pageY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            this.dollyStart.set(0, distance);
+            if (touches.length == 2) {
+                const dx = touches[0].pageX - touches[1].pageX;
+                const dy = touches[0].pageY - touches[1].pageY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                this.dollyStart.set(0, distance);
+            }
         };
         this.handleTouchStartDollyPan = event => {
             if (this.enableZoom)
@@ -220,46 +210,32 @@ export class StarControls extends EventDispatcher {
         this.handleTouchMoveRotate = ({ touches }) => {
             if (touches.length === 1) {
                 this.rotateEnd.set(touches[0].pageX, touches[0].pageY);
-            }
-            else {
-                const x = 0.5 * (touches[0].pageX + touches[1].pageX);
-                const y = 0.5 * (touches[0].pageY + touches[1].pageY);
-                this.rotateEnd.set(x, y);
-            }
-            this.rotateDelta
+                this.rotateDelta
                 .subVectors(this.rotateEnd, this.rotateStart)
                 .multiplyScalar(this.rotateSpeed);
-            this.rotateLeft((2 * Math.PI * this.rotateDelta.x) / this.getElementHeight()); // yes, height
-            this.rotateUp((2 * Math.PI * this.rotateDelta.y) / this.getElementHeight());
-            this.rotateStart.copy(this.rotateEnd);
+                this.rotateLeft((2 * Math.PI * this.rotateDelta.x) / this.getElementHeight()); // yes, height
+                this.rotateUp((2 * Math.PI * this.rotateDelta.y) / this.getElementHeight());
+                this.rotateStart.copy(this.rotateEnd);
+            }
+            
         };
         this.handleTouchMoveDolly = ({ touches }) => {
             if (!Array.isArray(touches))
-                touches = [];
-            if (!touches[0])
-                touches[0] = { pageX: 0, pageY: 0 };
-            if (!touches[1])
-                touches[1] = {
-                    pageX: touches[0].pageX || 0,
-                    pageY: touches[0].pageY || 0,
-                };
-            const dx = touches[0].pageX - touches[1].pageX;
-            const dy = touches[0].pageY - touches[1].pageY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            this.dollyEnd.set(0, distance);
-            this.dollyDelta.set(0, this.dollyEnd.y / this.dollyStart.y ** this.zoomSpeed);
-            this.dollyIn(this.dollyDelta.y);
-            this.dollyStart.copy(this.dollyEnd);
+                return;
+            if (touches.length == 2) {
+                const dx = touches[0].pageX - touches[1].pageX;
+                const dy = touches[0].pageY - touches[1].pageY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                this.dollyEnd.set(0, distance);
+                this.dollyDelta.set(0, this.dollyEnd.y / this.dollyStart.y ** this.zoomSpeed);
+                this.dollyIn(this.dollyDelta.y);
+                this.dollyStart.copy(this.dollyEnd);
+            }
+            
         };
         this.handleTouchMoveDollyPan = event => {
             if (this.enableZoom)
                 this.handleTouchMoveDolly(event);
-        };
-        this.handleTouchMoveDollyRotate = event => {
-            if (this.enableZoom)
-                this.handleTouchMoveDolly(event);
-            if (this.enableRotate)
-                this.handleTouchMoveRotate(event);
         };
 
         //
@@ -276,29 +252,17 @@ export class StarControls extends EventDispatcher {
             this.domElement.focus ? this.domElement.focus() : window.focus();
             switch (event.button) {
                 case 0:
-                    switch (this.mouseButtons.LEFT) {
-                        case MOUSE.ROTATE:
-                            if (this.enableRotate === false)
-                                return;
-                            this.moveStart.set(event.clientX, event.clientY);
-                            this.handleMouseDownRotate(event);
-                            this.state = STATE.ROTATE;
-                            break;
-                        default:
-                            this.state = STATE.NONE;
-                    }
+                    if (this.enableRotate === false)
+                        return;
+                    this.moveStart.set(event.clientX, event.clientY);
+                    this.handleMouseDownRotate(event);
+                    this.state = STATE.ROTATE;
                     break;
                 case 1:
-                    switch (this.mouseButtons.MIDDLE) {
-                        case MOUSE.DOLLY:
-                            if (this.enableZoom === false)
-                                return;
-                            this.handleMouseDownDolly(event);
-                            this.state = STATE.DOLLY;
-                            break;
-                        default:
-                            this.state = STATE.NONE;
-                    }
+                    if (this.enableZoom === false)
+                        return;
+                    this.handleMouseDownDolly(event);
+                    this.state = STATE.DOLLY;
                     break;
                 case 2:
                     this.state = STATE.NONE;
@@ -313,7 +277,6 @@ export class StarControls extends EventDispatcher {
             }
         };
         this.onMouseMove = event => {
-            console.log(`mouseX: ${event.clientX}, mouseY: ${event.clientY}`);
             var _a, _b;
             if (this.enabled === false)
                 return;
@@ -365,35 +328,17 @@ export class StarControls extends EventDispatcher {
             (_b = (_a = event).preventDefault) === null || _b === void 0 ? void 0 : _b.call(_a);
             switch (event.touches.length) {
                 case 1:
-                    switch (this.touches.ONE) {
-                        case TOUCH.ROTATE:
-                            if (this.enableRotate === false)
-                                return;
-                            this.moveStart.set(event.touches[0].pageX, event.touches[0].pageY);
-                            this.handleTouchStartRotate(event);
-                            this.state = STATE.TOUCH_ROTATE;
-                            break;
-                        default:
-                            this.state = STATE.NONE;
-                    }
+                    if (this.enableRotate === false)
+                        return;
+                    this.moveStart.set(event.touches[0].pageX, event.touches[0].pageY);
+                    this.handleTouchStartRotate(event);
+                    this.state = STATE.TOUCH_ROTATE;
                     break;
                 case 2:
-                    switch (this.touches.TWO) {
-                        case TOUCH.DOLLY_PAN:
-                            if (this.enableZoom === false)
-                                return;
-                            this.handleTouchStartDollyPan(event);
-                            this.state = STATE.TOUCH_DOLLY_PAN;
-                            break;
-                        case TOUCH.DOLLY_ROTATE:
-                            if (this.enableZoom === false && this.enableRotate === false)
-                                return;
-                            this.handleTouchStartDollyRotate(event);
-                            this.state = STATE.TOUCH_DOLLY_ROTATE;
-                            break;
-                        default:
-                            this.state = STATE.NONE;
-                    }
+                    if (this.enableZoom === false)
+                        return;
+                    this.handleTouchStartDollyPan(event);
+                    this.state = STATE.TOUCH_DOLLY_PAN;
                     break;
                 default:
                     this.state = STATE.NONE;
@@ -421,12 +366,6 @@ export class StarControls extends EventDispatcher {
                     this.handleTouchMoveDollyPan(event);
                     this.update();
                     break;
-                case STATE.TOUCH_DOLLY_ROTATE:
-                    if (this.enableZoom === false && this.enableRotate === false)
-                        return;
-                    this.handleTouchMoveDollyRotate(event);
-                    this.update();
-                    break;
                 default:
                     this.state = STATE.NONE;
             }
@@ -435,7 +374,9 @@ export class StarControls extends EventDispatcher {
             if (this.enabled === false)
                 return;
             if (!useDOM) {
+                console.log(`MoveEnd before final set: (${this.moveEnd.x}, ${this.moveEnd.y})`);
                 this.moveEnd.set(event.touches[0].pageX, event.touches[0].pageY);
+                console.log(`MoveEnd after final set: (${this.moveEnd.x}, ${this.moveEnd.y})`);
                 this.moveDelta.subVectors(this.moveEnd, this.moveStart);
                 if (this.moveDelta.length() < 2.0)
                     this.handleTouchEnd(this.moveEnd);
@@ -530,6 +471,7 @@ export class StarControls extends EventDispatcher {
         this.starInteraction(position);
     }
     handleTouchEnd(position) {
+        console.log(`useDom: ${useDOM}, position: (${position.x},${position.y})`);
         if (!useDOM) this.starInteraction(position);
     }
 }
