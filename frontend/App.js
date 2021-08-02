@@ -40,15 +40,55 @@ starData = starData.concat(require('./star-env/data/stars_10.json'));
 
 const prefix = Linking.createURL('/');
 
+const config = {
+  screens: {
+    Home: {
+      initialRouteName: 'StarMap',
+      screens: {
+        StarMap: {
+          path: 'stars'
+        },
+        Favorites: {
+          path: 'favorites'
+        }
+      }
+    },
+    UserEntry: {
+      initialRouteName: 'Login',
+      screens: {
+        Login: {
+          path: 'login'
+        },
+        Registration: {
+          path: 'signup'
+        },
+        EmailVerification: {
+          path: 'verify'
+        },
+        NewPassword: {
+          path: 'new-password'
+        },
+        ForgotPassword: {
+          path: 'forgot-password'
+        }
+      }
+    },
+    StarMap: '*',
+  }
+}
+
+const linking = {
+  prefixes: [global.baseURL, prefix],
+  config
+};
+
 export default function App() {
   global.stars = starData;
   global.starIdx = require( './star-env/data/columns.json');
   global.baseURL = 'https://constellario.xyz';
   global.longlat = { longitude: 0, latitude: 0 };
 
-  const linking = {
-    prefixes: [global.baseURL, prefix],
-  };
+  
 
   function setLocation(longlat) {
     global.longlat = longlat;
@@ -105,9 +145,9 @@ function Home() {
   }
 
   return (
-    <NavigationContainer linking={linking} fallback={<Text>Loading...</Text>}>
+    <NavigationContainer>
         <Drawer.Navigator 
-          initialRouteName="Star-Map" 
+          initialRouteName="StarMap" 
           headerMode="none" 
           drawerContent={(props) => <CustomDrawerContent {...props} />} 
           drawerStyle={{backgroundColor: '#334f59'}}
@@ -116,7 +156,7 @@ function Home() {
             inactiveTintColor: '#ffffff',
             activeBackgroundColor: '#222c33'
           }}>
-          <Drawer.Screen name="Star-Map" component={StarPage} />
+          <Drawer.Screen name="StarMap" component={StarPage} />
           <Drawer.Screen name="Favorites" component={FavePage} />
         </Drawer.Navigator>
       </NavigationContainer>  
@@ -130,9 +170,9 @@ function UserEntry() {
       <Stack.Navigator initialRouteName='Login' headerMode='none'>
         <Stack.Screen name="Login" component={LoginPage}/>
         <Stack.Screen name="Registration" component={RegistrationPage}/>
-        <Stack.Screen name="Email-Verification" component={VerifyEmailPage}/>
-        <Stack.Screen name="New-Password" component={NewPassPage}/>
-        <Stack.Screen name="Forgot-Password" component={ForgotPassPage}/>
+        <Stack.Screen name="EmailVerification" component={VerifyEmailPage}/>
+        <Stack.Screen name="NewPassword" component={NewPassPage}/>
+        <Stack.Screen name="ForgotPassword" component={ForgotPassPage}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
