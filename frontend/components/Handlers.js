@@ -1,4 +1,3 @@
-  let baseURL = "https://constellario.xyz";
 
   global.userID = 0;
 
@@ -49,7 +48,7 @@
           email: email,
         }
 
-    fetch(baseURL + '/api/signup',
+    fetch(global.baseURL + '/api/signup',
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -127,7 +126,7 @@
           password: pass,
         }
 
-    fetch(baseURL + '/api/login',
+    fetch(global.baseURL + '/api/login',
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -218,7 +217,7 @@
           
         }
 
-    fetch('https://constellario.xyz/api/reset-password',
+    fetch(global.baseURL + '/api/reset-password',
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -298,7 +297,7 @@
           password: pass,
         }
 
-    fetch('https://constellario.xyz/api/reset/:idToken/:pwToken',
+    fetch(global.baseURL + '/api/reset/:idToken/:pwToken',
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -387,7 +386,7 @@
           email: email,
         }
 
-    fetch(baseURL + '/api/verify-email',
+    fetch(global.baseURL + '/api/verify-email',
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
