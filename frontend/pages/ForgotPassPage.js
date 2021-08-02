@@ -1,40 +1,29 @@
 import * as React from "react";
-import { View, Text, Linking, TextInput } from "react-native";
+import { View, Text, TextInput } from "react-native";
 import ColorButton from '../components/ColorButton.js';
 import StarHeader from "../components/StarHeader.js";
 import { Icon } from 'react-native-elements';
 import { page, text, spacing } from "../assets/global_styles";
-import { 
-  useFonts,
-  Amiko_700Bold,
-  Amiko_400Regular,
-  Amiko_600SemiBold,
-} from '@expo-google-fonts/amiko';
+import { Amiko_400Regular } from '@expo-google-fonts/amiko';
 import * as Font from 'expo-font';
-import { loginFetch } from "./Handlers.js";
+import { forgotPassFetch } from "../components/Handlers.js";
 
 
-export default function LoginPage({navigation}) {
+export default function ForgotPassPage({navigation}) {
 
   const [errorOccured, setErrorOccured] = React.useState(false);
   const [errMessage, setErrMessage] = React.useState('');
-  const [username, setUsername] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [loaded] = Font.useFonts({Amiko_400Regular});
+  const [email, setEmail] = React.useState('');
+  const [loaded] = Font.useFonts( {Amiko_400Regular} );
 
   if(!loaded)
   {
     return null;
   }
   
-  function handleUsername(event)
+  function handleEmail(event)
   {
-    setUsername(event.target.value);
-  }
- 
-  function handlePassword(event)
-  {
-    setPassword(event.target.value);
+    setEmail(event.target.value);
   }
 
   function errorMessage(errorMessage)
@@ -48,25 +37,32 @@ export default function LoginPage({navigation}) {
       }
       else if( errorMessage == 2)
       {
-        setErrMessage("Wrong password!");
+        setErrMessage("Passwords do not match!");
       }
       else if ( errorMessage == 3)
       {
-        setErrMessage("User does not exist. Please sign up!");
-        
+        setErrMessage("Invalid combination was entered. Try again.");
       }
       else if ( errorMessage == 4)
       {
-        setErrMessage("Wrong username and password combination. Try again.");
+        setErrMessage("User does not exist. Please sign up!");
       }
       else if ( errorMessage == 5)
       {
+        setErrMessage("Wrong username and password combination.");
+      }
+      else if ( errorMessage == 6)
+      {
         setErrMessage("Internal server error. Try again later.");
+      }
+      else if ( errorMessage == 7)
+      {
+        setErrMessage("Success! Please check your email for more detail.");
       }
     }
   }
 
-  let usernameField = 
+  let emailField = 
   <TextInput
       style = 
       {[
@@ -77,57 +73,29 @@ export default function LoginPage({navigation}) {
         spacing.mv2,
         page.color
       ]}
-      placeholder = {'Username'}
+      placeholder = {'Email'}
       placeholderTextColor = {'#d8e3e1'}
-      onChange = {handleUsername}
+      onChange = {handleEmail}
     />;
-
-  let passField = 
-  <TextInput
-  style = 
-  {[
-    page.inputBoxConfig,
-    text.normal,
-    text.center,
-    spacing.mv2,
-    page.color
-  ]}
-  placeholder = {'Password'}
-  placeholderTextColor = {'#d8e3e1'}
-  secureTextEntry = {true}
-  onChange = {handlePassword}
-  color = {'#d8e3e1'}
-  />;
   
   return (
   
     <View style={[page.centerer, page.background]}>
       <View>
-      <StarHeader/>
+        <StarHeader/>
             <Text style = 
           {{
             fontFamily: 'Amiko_400Regular',
             color: '#d8e3e1',
             marginBottom: 10,
             textAlign: "center"
-          }}> The stars above you are just a click away.{"\n"} Login below!</Text>
+          }}>Enter the email you registered with, and{"\n"} we'll help you change your password.</Text>
   
-            {usernameField}
-            
-            {passField}
+            {emailField}
 
-            <Text onPress={() => navigation.navigate("Forgot-Password")}
-            style = 
-            {{
-              fontFamily: 'Amiko_400Regular',
-              color: '#d8e3e1',
-              textAlign: "right",
-              fontSize: 14,
-            }}>Forgot Password?</Text>
-
-            <ColorButton onPress = { () => errorMessage(loginFetch(username, password))}>
+            <ColorButton onPress = { () => errorMessage(forgotPassFetch(email))}>
               <Text style = {{color: "#d8e3e1", fontWeight: 'bold', alignSelf: 'center'}}>
-              <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/> Login! <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/>
+              <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/> Send email! <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/>
               </Text>
             </ColorButton> 
 
@@ -141,7 +109,7 @@ export default function LoginPage({navigation}) {
                     fontSize: 14
                   }}> {errMessage} </Text> : null}
 
-            <Text onPress={() => navigation.navigate('Registration')}
+            <Text onPress={() => navigation.navigate('Login')}
           style = 
           {{
             fontFamily: 'Amiko_400Regular',
@@ -149,7 +117,7 @@ export default function LoginPage({navigation}) {
             marginTop: 15,
             marginBottom: 15,
             textAlign: "center",
-          }}>New User? Click here!
+          }}>Return to login?
           </Text>
       </View>
     </View>

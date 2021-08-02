@@ -59,7 +59,7 @@ const fontLoader = new THREE.FontLoader();
 
 let font = fontLoader.parse( require( 'three/examples/fonts/optimer_regular.typeface.json' ) );
 
-export default function Starmap(props) {
+export default function Starmap() {
   const [selectedStar, setSelectedStar] = React.useState(null);
   const [particles, setParticles] = React.useState(null);
 

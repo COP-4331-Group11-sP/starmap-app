@@ -1,40 +1,48 @@
 import * as React from "react";
-import { View, Text, Linking, TextInput } from "react-native";
+import { View, Text, TextInput } from "react-native";
 import ColorButton from '../components/ColorButton.js';
 import StarHeader from "../components/StarHeader.js";
 import { Icon } from 'react-native-elements';
 import { page, text, spacing } from "../assets/global_styles";
-import { 
-  useFonts,
-  Amiko_700Bold,
-  Amiko_400Regular,
-  Amiko_600SemiBold,
-} from '@expo-google-fonts/amiko';
+import { Amiko_400Regular } from '@expo-google-fonts/amiko';
 import * as Font from 'expo-font';
-import { loginFetch, newPassFetch } from "./Handlers.js";
+import { registrationFetch } from '../components/Handlers.js'
 
 
-export default function NewPassPage({navigation}) {
+export default function RegistrationPage({navigation}) {
 
   const [errorOccured, setErrorOccured] = React.useState(false);
   const [errMessage, setErrMessage] = React.useState('');
-  const [pass, setPassword] = React.useState('');
-  const [conf, setConfPassword] = React.useState('');
-  const [loaded] = Font.useFonts({Amiko_400Regular});
+  const [username, setUsername] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [conf, setConf] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [loaded] = Font.useFonts( {Amiko_400Regular} );
 
   if(!loaded)
   {
     return null;
   }
   
+  function handleUsername(event)
+  {
+    setUsername(event.target.value);
+    console.log(username);
+  }
+ 
   function handlePassword(event)
   {
     setPassword(event.target.value);
   }
 
-  function handleConfPassword(event)
+  function handleConf(event)
   {
-     setConfPassword(event.target.value);
+    setConf(event.target.value);
+  }
+
+  function handleEmail(event)
+  {
+    setEmail(event.target.value);
   }
 
   function errorMessage(errorMessage)
@@ -52,22 +60,34 @@ export default function NewPassPage({navigation}) {
       }
       else if ( errorMessage == 3)
       {
-        setErrMessage("Invalid combination was entered. Try again.");
+        setErrMessage("Email must include an @ AND a period.");
       }
       else if ( errorMessage == 4)
       {
-        setErrMessage("User does not exist. Please sign up!");
+        setErrMessage("Username or e-mail has been used.");
       }
       else if ( errorMessage == 5)
-      {
-        setErrMessage("Wrong username and password combination.");
-      }
-      else if ( errorMessage == 6)
       {
         setErrMessage("Internal server error. Try again later.");
       }
     }
   }
+
+  let usernameField = 
+  <TextInput
+      style = 
+      {[
+        page.inputBoxConfig,
+        spacing.p3,
+        text.normal,
+        text.center,
+        spacing.mv2,
+        page.color
+      ]}
+      placeholder = {'Username'}
+      placeholderTextColor = {'#d8e3e1'}
+      onChange = {handleUsername}
+    />;
 
   let passField = 
   <TextInput
@@ -98,31 +118,51 @@ export default function NewPassPage({navigation}) {
   placeholder = {'Confirm Password'}
   placeholderTextColor = {'#d8e3e1'}
   secureTextEntry = {true}
-  onChange = {handleConfPassword}
+  onChange = {handleConf}
   />;
+
+  let emailField = 
+  <TextInput
+      style = 
+      {[
+        page.inputBoxConfig,
+        spacing.p3,
+        text.normal,
+        text.center,
+        spacing.mv2,
+        page.color
+      ]}
+      placeholder = {'Email'}
+      placeholderTextColor = {'#d8e3e1'}
+      onChange = {handleEmail}
+    />;
   
   return (
   
     <View style={[page.centerer, page.background]}>
       <View>
-      <StarHeader/>
+        <StarHeader/>
             <Text style = 
           {{
             fontFamily: 'Amiko_400Regular',
             color: '#d8e3e1',
             marginBottom: 10,
             textAlign: "center"
-          }}> Please enter your new password below.</Text>
-
+          }}> Welcome! You're just a moment away{"\n"} from favoriting the stars. Sign up below!</Text>
+  
+            {usernameField}
+            
             {passField}
 
             {confField}
 
+            {emailField}
 
-            <ColorButton onPress = { () => errorMessage(newPassFetch(pass, conf))}>
+            <ColorButton onPress = { () => errorMessage(registrationFetch(username, password, conf, email))}>
               <Text style = {{color: "#d8e3e1", fontWeight: 'bold', alignSelf: 'center'}}>
-              <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/> Update Password! <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/>
+              <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/> Register! <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/>
               </Text>
+              
             </ColorButton> 
 
             {errorOccured ? <Text style = 
@@ -134,6 +174,17 @@ export default function NewPassPage({navigation}) {
                     textAlign: "center",
                     fontSize: 14
                   }}> {errMessage} </Text> : null}
+
+            <Text onPress={() => navigation.navigate('Login')}
+          style = 
+          {{
+            fontFamily: 'Amiko_400Regular',
+            color: '#d8e3e1',
+            marginTop: 15,
+            marginBottom: 15,
+            textAlign: "center",
+          }}>Not a new user? Click here to sign in!
+          </Text>
       </View>
     </View>
   );

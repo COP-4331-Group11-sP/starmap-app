@@ -1,17 +1,12 @@
 import * as React from "react";
-import { View, Text, Linking, TextInput } from "react-native";
+import { View, Text, TextInput } from "react-native";
 import ColorButton from '../components/ColorButton.js';
 import StarHeader from "../components/StarHeader.js";
 import { Icon } from 'react-native-elements';
 import { page, text, spacing } from "../assets/global_styles";
-import { 
-  useFonts,
-  Amiko_700Bold,
-  Amiko_400Regular,
-  Amiko_600SemiBold,
-} from '@expo-google-fonts/amiko';
+import { Amiko_400Regular } from '@expo-google-fonts/amiko';
 import * as Font from 'expo-font';
-import { registrationFetch } from "./Handlers.js";
+import { registrationFetch } from "../components/Handlers.js";
 
 
 export default function LoginPage({navigation}) {
@@ -19,7 +14,7 @@ export default function LoginPage({navigation}) {
   const [errorOccured, setErrorOccured] = React.useState(false);
   const [errMessage, setErrMessage] = React.useState('');
   const [email, setEmail] = React.useState('');
-  const [loaded] = Font.useFonts({Amiko_400Regular});
+  const [loaded] = Font.useFonts( {Amiko_400Regular} );
 
   if(!loaded)
   {
