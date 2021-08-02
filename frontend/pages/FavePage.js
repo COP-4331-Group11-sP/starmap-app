@@ -4,17 +4,6 @@ import { Header } from 'react-native-elements';
 import MenuIcon from '../components/MenuIcon';
 import StarInfoCard from '../components/StarInfoCard';
 
-// TESTING
-let searchResults = [
-	{starId: '1'},
-	{starId: '2'},
-	{starId: '3'},
-	{starId: '4'},
-	{starId: '5'},
-	{starId: '0'},
-	{starId: '118330'}
-];
-
 export default function FavePage({navigation}) {
 	const [results, setResults] = React.useState([]);
 
@@ -36,13 +25,10 @@ export default function FavePage({navigation}) {
 	}
 
 	navigation.addListener('focus', () => {
-		/*
-		COMMENTED DURING TESTING
 		searchFavorites()
 		.then(searchResults => {
 			setResults(searchResults);
-		});*/
-		setResults(searchResults);
+		});
 	})
 
 	return (
