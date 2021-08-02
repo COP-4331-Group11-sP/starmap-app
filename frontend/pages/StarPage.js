@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, Platform } from 'react-native';
 import { Header, SearchBar } from 'react-native-elements';
 import MenuIcon from '../components/MenuIcon';
 import Starmap from '../star-env/Starmap';
+import {Menu} from '../styles/menu_styles';
 
 export default function StarPage({navigation}) {
 	const [search, setSearch] = React.useState('');

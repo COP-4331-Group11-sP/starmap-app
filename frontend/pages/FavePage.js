@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { FlatList, TouchableOpacity } from 'react-native';
+import { FlatList, TouchableOpacity, Platform } from 'react-native';
 import { Header } from 'react-native-elements';
 import MenuIcon from '../components/MenuIcon';
 import StarInfoCard from '../components/StarInfoCard';
+import {Menu} from '../styles/menu_styles';
 
 export default function FavePage({navigation}) {
 	const [results, setResults] = React.useState([]);

@@ -46,7 +46,7 @@ const config = {
       initialRouteName: 'StarMap',
       screens: {
         StarMap: {
-          path: 'stars'
+          path: ''
         },
         Favorites: {
           path: 'favorites'
@@ -112,10 +112,9 @@ export default function App() {
     <SafeAreaProvider style={{ backgroundColor: "#0b0f0f"}} >
       <NavigationContainer 
         linking={linking} 
-        fallback={<Text>Loading...</Text>} 
-        initialRouteName="Home" 
-        headerMode="none" >
-        <Stack.Navigator>
+        fallback={<Text>Loading...</Text>}>
+        <Stack.Navigator initialRouteName="Home" 
+        headerMode='none'>
           <Stack.Screen name="Home" component={Home} />
           <Stack.Screen name="UserEntry" component={UserEntry} />
         </Stack.Navigator>
@@ -145,7 +144,7 @@ function Home() {
   }
 
   return (
-    <NavigationContainer>
+    // <NavigationContainer>
         <Drawer.Navigator 
           initialRouteName="StarMap" 
           headerMode="none" 
@@ -159,14 +158,14 @@ function Home() {
           <Drawer.Screen name="StarMap" component={StarPage} />
           <Drawer.Screen name="Favorites" component={FavePage} />
         </Drawer.Navigator>
-      </NavigationContainer>  
+      // </NavigationContainer>  
   );
 }
 
 
 function UserEntry() {
   return (
-    <NavigationContainer>
+    // <NavigationContainer>
       <Stack.Navigator initialRouteName='Login' headerMode='none'>
         <Stack.Screen name="Login" component={LoginPage}/>
         <Stack.Screen name="Registration" component={RegistrationPage}/>
@@ -174,6 +173,6 @@ function UserEntry() {
         <Stack.Screen name="NewPassword" component={NewPassPage}/>
         <Stack.Screen name="ForgotPassword" component={ForgotPassPage}/>
       </Stack.Navigator>
-    </NavigationContainer>
+    // </NavigationContainer>
   );
 }

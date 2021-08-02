@@ -146,6 +146,17 @@ export default function LoginPage({navigation}) {
             textAlign: "center",
           }}>New User? Click here!
           </Text>
+
+          <Text onPress={() => navigation.navigate('Login')}
+          style = 
+          {{
+            fontFamily: 'Amiko_400Regular',
+            color: '#d8e3e1',
+            textAlign: "center",
+            fontSize: 10
+          }}><Icon  name="back" size={10} type="antdesign" color='#d8e3e1'/> Return to Starmap 
+          </Text>
+          
       </View>
     </View>
   );
