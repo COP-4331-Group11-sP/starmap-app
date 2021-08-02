@@ -4,6 +4,7 @@ const colors = {
   primary: "#d8e3e1",
   secondary: "#839997",
   tertiary: "#334f59",
+  quarternary: "#080a0d"
 };
 
 const page = StyleSheet.create({
@@ -13,14 +14,29 @@ const page = StyleSheet.create({
     justifyContent: "center",
   },
   color: {
-    backgroundColor: colors.tertiary,
     color: colors.primary,
   },
   icon: {
     tintColor: colors.primary,
     width: 50,
     height: 50,
-  }
+  },
+  background:
+  {
+    backgroundColor: colors.quarternary,
+  },
+  inputBoxConfig: {
+    borderWidth: 1,
+    borderColor: colors.tertiary,
+    borderRadius: 3,
+    padding: 15,
+    fontWeight: 'bold'
+  },
+  btnLogin: {
+    backgroundColor: '#839997',
+    fontWeight: 'bold',
+    marginTop: 10
+  },
 });
 
 const text = StyleSheet.create({
@@ -41,6 +57,10 @@ const text = StyleSheet.create({
   },
   right: {
     textAlign: "right",
+  },
+  bold: 
+  {
+    fontWeight: 'bold',
   }
 });
 
@@ -74,7 +94,8 @@ const spacing = StyleSheet.create({
 	mv3: {
 		marginTop: 15,
 		marginBottom: 15
-	}
+	},
+
 });
 
 export { colors, page, text ,spacing };
