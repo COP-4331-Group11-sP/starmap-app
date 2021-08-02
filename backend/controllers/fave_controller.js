@@ -1,4 +1,3 @@
-const { resolve } = require('node:path');
 const Fave = require('../models/fave.js');
 
 //UPDATES FAVORITE STAR
