@@ -7,13 +7,14 @@ import { page, text, spacing } from "../assets/global_styles";
 import { Amiko_400Regular } from '@expo-google-fonts/amiko';
 import * as Font from 'expo-font';
 import { forgotPassFetch } from "../components/Handlers.js";
-
+import { Link } from '@react-navigation/native';
 
 export default function ForgotPassPage({navigation}) {
 
   const [errorOccured, setErrorOccured] = React.useState(false);
   const [errMessage, setErrMessage] = React.useState('');
   const [email, setEmail] = React.useState('');
+  const [emailSent, setEmailSent] = React.useState(false);
   const [loaded] = Font.useFonts( {Amiko_400Regular} );
 
   if(!loaded)
@@ -84,21 +85,30 @@ export default function ForgotPassPage({navigation}) {
       <View>
         <StarHeader/>
             <Text style = 
-          {{
-            fontFamily: 'Amiko_400Regular',
-            color: '#d8e3e1',
-            marginBottom: 10,
-            textAlign: "center"
-          }}>Enter the email you registered with, and{"\n"} we'll help you change your password.</Text>
+            {{
+              fontFamily: 'Amiko_400Regular',
+              color: '#d8e3e1',
+              marginBottom: 10,
+              textAlign: "center"
+            }}>
+              Enter the email you registered with, and{"\n"} we'll help you change your password.
+            </Text>
   
             {emailField}
 
-            <ColorButton onPress = { () => errorMessage(forgotPassFetch(email))}>
+            <ColorButton onPress = { () => {
+              forgotPassFetch(email)
+              .then(message => {
+                errorMessage(message);
+                if (message == 0) {
+                  setEmailSent(true);
+                }
+              });
+            }}>
               <Text style = {{color: "#d8e3e1", fontWeight: 'bold', alignSelf: 'center'}}>
               <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/> Send email! <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/>
               </Text>
-            </ColorButton> 
-
+            </ColorButton>
             {errorOccured ? <Text style = 
                   {{
                     fontFamily: 'Amiko_400Regular',
@@ -109,7 +119,7 @@ export default function ForgotPassPage({navigation}) {
                     fontSize: 14
                   }}> {errMessage} </Text> : null}
 
-            <Text onPress={() => navigation.navigate('Login')}
+            <Link to='/login'
           style = 
           {{
             fontFamily: 'Amiko_400Regular',
@@ -118,9 +128,9 @@ export default function ForgotPassPage({navigation}) {
             marginBottom: 15,
             textAlign: "center",
           }}>Return to login?
-          </Text>
+          </Link>
 
-          <Text onPress={() => navigation.navigate('Login')}
+          <Link to='/stars'
           style = 
           {{
             fontFamily: 'Amiko_400Regular',
@@ -128,7 +138,7 @@ export default function ForgotPassPage({navigation}) {
             textAlign: "center",
             fontSize: 10
           }}><Icon  name="back" size={10} type="antdesign" color='#d8e3e1'/> Return to Starmap 
-          </Text>
+          </Link>
       </View>
     </View>
   );

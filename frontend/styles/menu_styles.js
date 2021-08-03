@@ -1,8 +1,7 @@
-import { StyleSheet,Platform } from "react-native";
+import { StyleSheet,Platform, PixelRatio } from "react-native";
 import { Header, ListItem, Icon } from "react-native-elements";
 import { color } from "react-native-elements/dist/helpers";
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-
 
 
 
@@ -11,10 +10,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 
 const Menu = StyleSheet.create({
-    
-    
-
-    
     //width handled by parent "dropDownMenu"
     NavItems: {
         backgroundColor: "#334f59",
@@ -24,12 +19,10 @@ const Menu = StyleSheet.create({
 
     navbar:{
         
-        height: Platform.OS === "web" ? 60: null,
-        borderStyle: Platform.OS === "web" ? "none" :null,
+        height: Platform.OS === "web" ? 60 : null,
+        borderStyle: Platform.OS === "web" ? "none" : null,
         borderBottomWidth: 0,
         // opacity:  Platform.OS  === "web" ? 1: 0.1,
-        
-        
         
     },
     

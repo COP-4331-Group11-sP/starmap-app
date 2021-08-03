@@ -37,7 +37,7 @@ exports.addFave = async (req, res) => {
     const newFave = await fave.save();
     res.status(200).json(newFave);
   } catch (err) {
-    res.status(500).send(error);
+    res.status(500).send(err);
   }
 }
 
@@ -48,8 +48,8 @@ exports.deleteFave = async (req, res) => {
   if (!favorite) res.status(404).send("No item found");
   try {
     res.status(200).send();
-  } catch (error) {
-    res.status(500).send(error);
+  } catch (err) {
+    res.status(500).send(err);
   }
 }
 

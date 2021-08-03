@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const { validationResult } = require('express-validator');
 const saltRounds = 10;
 const User = require('../models/user.js');
-const PORT = ":5004";
+const PORT = "";
 
 const transporter = nodemailer.createTransport({
 	service: "Gmail",
@@ -103,7 +103,7 @@ exports.resetPasswordEmail = async (req, res) => {
     const resetToken = existingUser.generateResetToken();
     const idToken = existingUser.generateIDToken();
     // Make unique URL REMEBER TO CHANGE PORT
-    const url = `http://constellario.xyz${PORT}/reset/${idToken}/${resetToken}`
+    const url = `https://constellario.xyz${PORT}/new-password/${idToken}/${resetToken}`;
     // Send email
     transporter.sendMail({
       to: email,
@@ -119,8 +119,7 @@ exports.resetPasswordEmail = async (req, res) => {
 }
 
 exports.resetPassword = async (req, res) => {
-  const { idToken, pwToken } = req.params;
-  const { password } = req.body;
+  const { idToken, pwToken, password } = req.body;
 
   const errors = validationResult(req);
   if(!errors.isEmpty()) {
@@ -188,7 +187,7 @@ exports.verifyEmail = async (req, res) => {
        // Step 2 - Generate a verification token with the user's ID
        const verificationToken = existingUser.generateVerificationToken();
        // Step 3 - Email the user a unique verification link
-       const url = `http://constellario.xyz${PORT}/verify/${verificationToken}`
+       const url = `https://constellario.xyz${PORT}/verify/${verificationToken}`
        transporter.sendMail({
          to: email,
          subject: 'Verify Account',
@@ -203,8 +202,9 @@ exports.verifyEmail = async (req, res) => {
 }
 
 exports.verify = async (req, res) => {
-  const { verificationToken } = req.params;
-  
+  console.log(req.body);
+  const { verificationToken } = req.body;
+
   // Check we have an id
   if (!verificationToken) {
       return res.status(422).send({ 
@@ -226,23 +226,18 @@ exports.verify = async (req, res) => {
 
   try{
       // Step 2 - Find user with matching ID
-      const user = await User.findOne({ _id: payload.ID });
-      if (!user) {
-         return res.status(404).send({ 
-            message: "User does not  exists" 
-         });
-      }
-      // Step 3 - Update user verification status to true
-      try {
-        await User.findByIdAndUpdate({ _id : payload.ID}, { verified : true });
+      const user = await User.findByIdAndUpdate(payload.ID, {verified: true});
+      if (user) {
         return res.status(200).send({
-            message: "Account Verified"
-        }); 
-      } catch (err) {
-      return res.status(500).send(err);
+          message: "User verified"
+        });
+      } else {
+        return res.status(404).send({ 
+          message: "User does not  exists" 
+       });
       }
       
   } catch (err) {
-  return res.status(500).send(err);
+    return res.status(500).send(err);
   }
 }

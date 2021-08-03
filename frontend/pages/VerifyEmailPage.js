@@ -6,15 +6,26 @@ import { Icon } from 'react-native-elements';
 import { page, text, spacing } from "../assets/global_styles";
 import { Amiko_400Regular } from '@expo-google-fonts/amiko';
 import * as Font from 'expo-font';
-import { registrationFetch } from "../components/Handlers.js";
+import { verifyFetch } from "../components/Handlers.js";
+import { Link } from '@react-navigation/native';
 
-
-export default function LoginPage({navigation}) {
+export default function VerifyEmailPage({navigation, route}) {
 
   const [errorOccured, setErrorOccured] = React.useState(false);
   const [errMessage, setErrMessage] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [loaded] = Font.useFonts( {Amiko_400Regular} );
+  const [verified, setVerified] = React.useState(false);
+
+
+  React.useEffect(() => {
+    console.log(route.params.verificationToken);
+    verifyFetch(route.params.verificationToken)
+    .then(message => {
+      errorMessage(message);
+      setVerified(true);
+    });
+  }, [route.params.verificationToken]);
 
   if(!loaded)
   {
@@ -57,42 +68,27 @@ export default function LoginPage({navigation}) {
       }
     }
   }
-
-  let emailField = 
-  <TextInput
-      style = 
-      {[
-        page.inputBoxConfig,
-        spacing.p3,
-        text.normal,
-        text.center,
-        spacing.mv2,
-      ]}
-      placeholder = {'Email'}
-      placeholderTextColor = {'#d8e3e1'}
-      onChange = {handleEmail}
-    />;
   
   return (
   
     <View style={[page.centerer, page.background]}>
       <View>
         <StarHeader/>
-            <Text style = 
-          {{
-            fontFamily: 'Amiko_400Regular',
-            color: '#d8e3e1',
-            marginBottom: 10,
-            textAlign: "center"
-          }}>Enter the email you registered with{"\n"} and await a verification email.</Text>
-  
-            {emailField}
+          <Text style = 
+            {{
+              fontFamily: 'Amiko_400Regular',
+              color: '#d8e3e1',
+              marginBottom: 10,
+              textAlign: "center"
+            }}> 
+            {
+              verified ? 
+              'You\'ve verified! Return to the starmap to enjoy the view!' : 
+              'You\'re not verified. Something went wrong!'
+            }
+          </Text>
 
-            <ColorButton onPress = { () => errorMessage(verifyEmailFetch(email))}>
-              <Text style = {{color: "#d8e3e1", fontWeight: 'bold', alignSelf: 'center'}}>
-              <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/> Send verification email! <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/>
-              </Text>
-            </ColorButton> 
+            
 
             {errorOccured ? <Text style = 
                   {{
@@ -104,7 +100,7 @@ export default function LoginPage({navigation}) {
                     fontSize: 14
                   }}> {errMessage} </Text> : null}
 
-            <Text onPress={() => navigation.navigate('Login')}
+            <Link to='/login'
           style = 
           {{
             fontFamily: 'Amiko_400Regular',
@@ -113,9 +109,9 @@ export default function LoginPage({navigation}) {
             marginBottom: 15,
             textAlign: "center",
           }}>Return to login?
-          </Text>
+          </Link>
 
-          <Text onPress={() => navigation.navigate('Login')}
+          <Link to='/stars'
           style = 
           {{
             fontFamily: 'Amiko_400Regular',
@@ -123,7 +119,7 @@ export default function LoginPage({navigation}) {
             textAlign: "center",
             fontSize: 10
           }}><Icon  name="back" size={10} type="antdesign" color='#d8e3e1'/> Return to Starmap 
-          </Text>
+          </Link>
           
       </View>
     </View>

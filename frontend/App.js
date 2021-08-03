@@ -6,10 +6,11 @@ import * as Linking from 'expo-linking';
 import { Text } from "react-native";
 import { colors, page, text, spacing } from "./assets/global_styles";
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer  } from '@react-navigation/native';
+import { NavigationContainer, Link } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
 import LeftArrowLine from './components/LeftArrowLine';
+import { readCookie } from './components/cookieHandler';
 
 import StarPage from './pages/StarPage';
 import FavePage from './pages/FavePage';
@@ -42,53 +43,36 @@ const prefix = Linking.createURL('/');
 
 const config = {
   screens: {
-    Home: {
-      initialRouteName: 'StarMap',
-      screens: {
-        StarMap: {
-          path: ''
-        },
-        Favorites: {
-          path: 'favorites'
-        }
-      }
+    StarMap: 'stars',
+    Favorites: 'favorites',
+    Login: 'login',
+    Registration: 'signup',
+    EmailVerification: {
+      path: 'verify/:verificationToken'
     },
-    UserEntry: {
-      initialRouteName: 'Login',
-      screens: {
-        Login: {
-          path: 'login'
-        },
-        Registration: {
-          path: 'signup'
-        },
-        EmailVerification: {
-          path: 'verify'
-        },
-        NewPassword: {
-          path: 'new-password'
-        },
-        ForgotPassword: {
-          path: 'forgot-password'
-        }
-      }
+    NewPassword: {
+      path: 'new-password/:idToken/:pwToken'
     },
-    StarMap: '*',
+    ForgotPassword: {
+      path: 'forgot-password'
+    },
   }
-}
-
-const linking = {
-  prefixes: [global.baseURL, prefix],
-  config
 };
 
+
+
 export default function App() {
+  const [loggedIn, setLoggedIn] = React.useState(false);
   global.stars = starData;
-  global.starIdx = require( './star-env/data/columns.json');
+  global.starIdx = require( './star-env/data/columns.json' );
   global.baseURL = 'https://constellario.xyz';
   global.longlat = { longitude: 0, latitude: 0 };
+  global.userId = null; // attempt to get userId from cookies on startup. if failure, we know they aren't logged in
 
-  
+  const linking = {
+    prefixes: [global.baseURL, prefix],
+    config
+  };
 
   function setLocation(longlat) {
     global.longlat = longlat;
@@ -106,47 +90,42 @@ export default function App() {
       let loc = await Location.getCurrentPositionAsync({});
       setLocation(loc.coords);
     })();
-  }, []);
 
-  return (
-    <SafeAreaProvider style={{ backgroundColor: "#0b0f0f"}} >
-      <NavigationContainer 
-        linking={linking} 
-        fallback={<Text>Loading...</Text>}>
-        <Stack.Navigator initialRouteName="Home" 
-        headerMode='none'>
-          <Stack.Screen name="Home" component={Home} />
-          <Stack.Screen name="UserEntry" component={UserEntry} />
-        </Stack.Navigator>
-      </NavigationContainer>  
-    </SafeAreaProvider>
-  );
-}
+    global.userId = readCookie();
+    if (global.userId) {
+      setLoggedIn(true);
+    }
+  }, [global.userId]);
 
-function Home() {
   function CustomDrawerContent(props) {
+    const routesToExclude = ['Registration', 'EmailVerification', 'NewPassword', 'ForgotPassword'];
+    const { state, ...rest } = props;
+    const newState = { ...state };
+    newState.routes = newState.routes.filter(
+      item => !routesToExclude.includes(item.name)
+    );
     return (
       <DrawerContentScrollView {...props}>
         <DrawerItem
         label={() => <LeftArrowLine />}
         onPress={props.navigation.closeDrawer}
-        
         />
-        <DrawerItemList {...props} />
+        <DrawerItemList state={newState} {...rest} />
         <DrawerItem
-        label="Help"
-        onPress={() => Linking.openURL('https://mywebsite.com/help')}
-        activeTintColor={props.activeTintColor}
-        inactiveTintColor={props.inactiveTintColor}
+        label={'Logout'}
+        onPress={() => {global.userId = null; setLoggedIn(false);}}
         />
       </DrawerContentScrollView>
     );
   }
 
   return (
-    // <NavigationContainer>
-        <Drawer.Navigator 
-          initialRouteName="StarMap" 
+    <SafeAreaProvider style={{ backgroundColor: "#0b0f0f"}} >
+      <NavigationContainer 
+        linking={linking} 
+        fallback={<Text>Loading...</Text>}>
+        <Drawer.Navigator
+          initialRouteName="StarMap"
           headerMode="none" 
           drawerContent={(props) => <CustomDrawerContent {...props} />} 
           drawerStyle={{backgroundColor: '#334f59'}}
@@ -155,24 +134,15 @@ function Home() {
             inactiveTintColor: '#ffffff',
             activeBackgroundColor: '#222c33'
           }}>
-          <Drawer.Screen name="StarMap" component={StarPage} />
-          <Drawer.Screen name="Favorites" component={FavePage} />
-        </Drawer.Navigator>
-      // </NavigationContainer>  
-  );
-}
-
-
-function UserEntry() {
-  return (
-    // <NavigationContainer>
-      <Stack.Navigator initialRouteName='Login' headerMode='none'>
-        <Stack.Screen name="Login" component={LoginPage}/>
-        <Stack.Screen name="Registration" component={RegistrationPage}/>
-        <Stack.Screen name="EmailVerification" component={VerifyEmailPage}/>
-        <Stack.Screen name="NewPassword" component={NewPassPage}/>
-        <Stack.Screen name="ForgotPassword" component={ForgotPassPage}/>
-      </Stack.Navigator>
-    // </NavigationContainer>
+            <Drawer.Screen name="StarMap" component={StarPage} />
+            <Drawer.Screen name="Favorites" component={FavePage} />
+            <Drawer.Screen name="Login" component={LoginPage} />
+            <Drawer.Screen name="Registration" component={RegistrationPage}/>
+            <Drawer.Screen name="EmailVerification" component={VerifyEmailPage}/>
+            <Drawer.Screen name="NewPassword" component={NewPassPage}/>
+            <Drawer.Screen name="ForgotPassword" component={ForgotPassPage}/>
+        </Drawer.Navigator> 
+      </NavigationContainer>  
+    </SafeAreaProvider>
   );
 }

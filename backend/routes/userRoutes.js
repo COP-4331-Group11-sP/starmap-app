@@ -23,12 +23,12 @@ app.post( "/api/login",[
 ], UserController.login);
 
 app.post('/api/reset-password', UserController.resetPasswordEmail);
-app.post('/api/reset/:idToken/:pwToken', [
+app.post('/api/reset', [
   check("password", "Please enter a valid password").isLength({ min: 8 })
 ], UserController.resetPassword);
 
 app.post('/api/verify-email', UserController.verifyEmail);
-app.get('/api/verify/:verificationToken', UserController.verify);
+app.post('/api/verify', UserController.verify);
 
 
 module.exports = app;

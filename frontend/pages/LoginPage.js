@@ -7,6 +7,7 @@ import { page, text, spacing } from "../assets/global_styles";
 import { Amiko_400Regular } from '@expo-google-fonts/amiko';
 import * as Font from 'expo-font';
 import { loginFetch } from "../components/Handlers.js";
+import { Link, useLinkTo } from '@react-navigation/native';
 
 
 export default function LoginPage({navigation}) {
@@ -16,6 +17,7 @@ export default function LoginPage({navigation}) {
   const [username, setUsername] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [loaded] = Font.useFonts({Amiko_400Regular});
+  const linkTo = useLinkTo();
 
   if(!loaded)
   {
@@ -111,16 +113,25 @@ export default function LoginPage({navigation}) {
             
             {passField}
 
-            <Text onPress={() => navigation.navigate("Forgot-Password")}
+            <Link to='/forgot-password'
             style = 
             {{
               fontFamily: 'Amiko_400Regular',
               color: '#d8e3e1',
               textAlign: "right",
               fontSize: 14,
-            }}>Forgot Password?</Text>
+            }}>Forgot Password?</Link>
 
-            <ColorButton onPress = { () => errorMessage(loginFetch(username, password))}>
+            <ColorButton onPress = { () => {
+                  loginFetch(username, password)
+                  .then(message => {
+                    errorMessage(message);
+                    if (message == 0) {
+                      linkTo('/stars');
+                    }
+                  })
+                }
+              }>
               <Text style = {{color: "#d8e3e1", fontWeight: 'bold', alignSelf: 'center'}}>
               <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/> Login! <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/>
               </Text>
@@ -136,7 +147,7 @@ export default function LoginPage({navigation}) {
                     fontSize: 14
                   }}> {errMessage} </Text> : null}
 
-            <Text onPress={() => navigation.navigate('Registration')}
+          <Link to='/signup'
           style = 
           {{
             fontFamily: 'Amiko_400Regular',
@@ -145,17 +156,18 @@ export default function LoginPage({navigation}) {
             marginBottom: 15,
             textAlign: "center",
           }}>New User? Click here!
-          </Text>
+          </Link>
 
-          <Text onPress={() => navigation.navigate('Login')}
+          <Link to='/stars'
           style = 
           {{
             fontFamily: 'Amiko_400Regular',
             color: '#d8e3e1',
             textAlign: "center",
             fontSize: 10
-          }}><Icon  name="back" size={10} type="antdesign" color='#d8e3e1'/> Return to Starmap 
-          </Text>
+          }}>
+            <Icon  name="back" size={10} type="antdesign" color='#d8e3e1'/> Return to Starmap 
+          </Link>
           
       </View>
     </View>

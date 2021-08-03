@@ -130,7 +130,6 @@ export default function Starmap() {
       else 
         positions.push( x, y, z );
       
-      
       const color = new THREE.Color(global.stars[s][global.starIdx.color]);
       colors.push( color.r, color.g, color.b );
 
@@ -144,7 +143,6 @@ export default function Starmap() {
       
       selected.push(0);
     }
-    
     
     const starGeometry = new THREE.BufferGeometry();
     starGeometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3) );
@@ -172,8 +170,16 @@ export default function Starmap() {
     setParticles( starParticles );
     scene.add( starParticles );
 
-    
-    
+    /*
+    const starBgGeo = new THREE.SphereGeometry(40, 40, 40);
+    const starBgMat = new THREE.MeshBasicMaterial({map: textureLoader.load( require( './PANO_MellingerRGB.jpg' ) )});
+    const starBgObj = new THREE.Mesh(starBgGeo, starBgMat);
+    starBgObj.scale.set(-1, 1, 1);
+    //starBgObj.renderDepth = 1000.0;  
+
+    scene.add( starBgObj );
+    */
+   
     function update() {
       time = StarUtils.getUTC(new Date());
       
@@ -191,6 +197,7 @@ export default function Starmap() {
       const rotFin = new THREE.Quaternion().multiplyQuaternions(rotZ, rotY);
 
       starParticles.setRotationFromQuaternion(rotFin);
+      //starBgObj.setRotationFromQuaternion(rotFin);
       //const rotMat = new THREE.Matrix4();
       //rotMat.makeRotationFromQuaternion(rotFin);
       //starParticles.material.uniforms.rotationMatrix.value = rotMat;

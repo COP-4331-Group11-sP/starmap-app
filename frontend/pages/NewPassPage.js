@@ -7,9 +7,10 @@ import { page, text, spacing } from "../assets/global_styles";
 import { Amiko_400Regular } from '@expo-google-fonts/amiko';
 import * as Font from 'expo-font';
 import { newPassFetch } from "../components/Handlers.js";
+import { Link } from '@react-navigation/native';
 
 
-export default function NewPassPage({navigation}) {
+export default function NewPassPage({navigation, route}) {
 
   const [errorOccured, setErrorOccured] = React.useState(false);
   const [errMessage, setErrMessage] = React.useState('');
@@ -114,7 +115,7 @@ export default function NewPassPage({navigation}) {
             {confField}
 
 
-            <ColorButton onPress = { () => errorMessage(newPassFetch(pass, conf))}>
+            <ColorButton onPress = { () => errorMessage(newPassFetch(pass, conf, route.params.idToken, route.params.pwToken))}>
               <Text style = {{color: "#d8e3e1", fontWeight: 'bold', alignSelf: 'center'}}>
               <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/> Update Password! <Icon  name="star" size={15} type="antdesign" color='#d8e3e1'/>
               </Text>
@@ -130,7 +131,7 @@ export default function NewPassPage({navigation}) {
                     fontSize: 14
                   }}> {errMessage} </Text> : null}
 
-        <Text onPress={() => navigation.navigate('Login')}
+        <Link to='/stars'
           style = 
           {{
             fontFamily: 'Amiko_400Regular',
@@ -139,7 +140,7 @@ export default function NewPassPage({navigation}) {
             fontSize: 10,
             marginTop: 10
           }}><Icon  name="back" size={10} type="antdesign" color='#d8e3e1'/> Return to Starmap 
-          </Text>
+          </Link>
           
       </View>
     </View>

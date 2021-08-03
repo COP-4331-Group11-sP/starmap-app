@@ -15,16 +15,16 @@ export default function StarInfoCard(props){
     const [favorited, setFavorited] = React.useState(false);
 
     React.useEffect(() => {
-        setFavorited(false);
         console.log(`StarInfoCard->SelectedStar: ${props.selectedStar}`);
         getStarDataById(props.selectedStar);
         if (props.faveWindow) {
             setFavorited(true);
+        } else {
+            searchFavorite(props.selectedStar);
         }
-        
-    }, [props.selectedStar, props.faveWindow]);
+    }, [props.selectedStar]);
 
-    function getStarDataById(starId) {
+    async function getStarDataById(starId) {
         if (starId == null) {
             setStarData(null);
             return;
@@ -61,10 +61,10 @@ export default function StarInfoCard(props){
         setStarData(data);
     }
 
-    async function searchFavorite() {
+    async function searchFavorite(starId) {
         let payload = {
-            starId: starData.starId, 
-            userId: '60e7bb316b98f0921db705b7'
+            starId: starId.toString(), 
+            userId: global.userId
         };
 
         let response = await fetch(global.baseURL + '/api/search-favorites', {
@@ -80,13 +80,14 @@ export default function StarInfoCard(props){
             setFavorited(true);
             return result;
         }
+        setFavorited(false);
     }
 
     async function addFavorite() {
         let payload = {
             displayId: starData.displayId, 
             starId: starData.starId.toString(), 
-            userId: '60e7bb316b98f0921db705b7'
+            userId: global.userId
         };
 
         let response = await fetch(global.baseURL + '/api/add-favorites', {
@@ -105,7 +106,7 @@ export default function StarInfoCard(props){
     async function removeFavorite() {
         let payload = {
             starId: starData.starId.toString(), 
-            userId: '60e7bb316b98f0921db705b7'
+            userId: global.userId
         };
 
         let response = await fetch(global.baseURL + '/api/delete-favorites', {

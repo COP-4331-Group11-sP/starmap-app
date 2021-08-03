@@ -9,7 +9,7 @@ export default function FavePage({navigation}) {
 	const [results, setResults] = React.useState([]);
 
 	async function searchFavorites() {
-		let payload = {starId: '.*', userId: '60e7bb316b98f0921db705b7'};
+		let payload = {starId: '.*', userId: global.userId};
 
 		let response = await fetch(global.baseURL + '/api/search-favorites', {
 				method: 'POST',

@@ -20,7 +20,7 @@ const urls = {
     backend: '/backend',
     routes: '/routes',
     models: '/models',
-    app: '/app/build',
+    app: '/build',
     certs: '/etc/letsencrypt/live/constellario.xyz'
 };
 
